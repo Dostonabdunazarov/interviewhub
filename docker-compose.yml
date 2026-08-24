@@ -1,0 +1,71 @@
+# Локальный стек: всё в контейнерах, порты наружу опубликованы.
+# Для разработки фронта удобнее `npm run dev` с прокси на API (см. frontend/README.md),
+# этот compose нужен, чтобы проверить прод-сборку целиком перед деплоем.
+#
+#   docker compose up -d --build
+#   http://localhost:8088
+#
+# Прод-стек для сервера — docker-compose.hypex.yml.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: interviewhub-postgres-dev
+    environment:
+      POSTGRES_DB: interviewhub
+      POSTGRES_USER: interviewhub
+      POSTGRES_PASSWORD: interviewhub
+    ports:
+      # 55433, чтобы не конфликтовать ни с системным 5432, ни с dev-контейнером
+      # ih-pg на 55432 из PLAN.md.
+      - "55433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U interviewhub -d interviewhub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: src/InterviewHub.Api/Dockerfile
+    container_name: interviewhub-api-dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=interviewhub;Username=interviewhub;Password=interviewhub"
+      # Ключ заведомо не секретный: это локальный стек. В проде — только через .env.
+      Jwt__Key: "local-compose-only-key-not-a-secret-min-32-chars"
+      Cors__AllowedOrigins__0: "http://localhost:8088"
+      Bootstrap__Admin__Email: "admin@interview.hypex.site"
+      Bootstrap__Admin__Password: "Admin123!"
+    ports:
+      - "5199:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: interviewhub-frontend-dev
+    depends_on:
+      - api
+    healthcheck:
+      # Через nginx: проверяет и его, и доступность api (в образе dotnet/aspnet
+      # нет wget, поэтому пробу вешаем сюда, а не на api).
+      # Именно 127.0.0.1, а не localhost: в контейнере localhost резолвится
+      # сперва в ::1, а nginx слушает только IPv4 — проба падала бы
+      # с "Connection refused" (проверено).
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health | grep -q Healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    ports:
+      - "8088:80"
+
+volumes:
+  pgdata:

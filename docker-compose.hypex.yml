@@ -1,0 +1,98 @@
+# Продовый стек для сервера hypex.site (общий обратный прокси Caddy).
+#
+# Портов наружу нет и своего TLS нет: трафик приходит через общий Caddy
+# из corpdev/infra, TLS терминирует Cloudflare. Домен interview.hypex.site.
+#
+#   docker compose -f docker-compose.hypex.yml up -d --build
+#
+# Схема (паттерн barberos — «фронтенд сам проксирует API»):
+#   Cloudflare → Caddy → interviewhub-frontend:80 ─┬─ SPA (статика)
+#                                                  └─ /api/, /health → interviewhub-api:8080
+#   interviewhub-api ↔ interviewhub-postgres — во внутренней сети backend.
+#
+# Секреты — в .env рядом с этим compose (см. .env.example). НЕ коммитить .env.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: interviewhub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Именованный volume: данные переживают пересоздание контейнера.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    # Порт наружу НЕ публикуется — доступ только из compose-сети.
+
+  api:
+    build:
+      context: .
+      dockerfile: src/InterviewHub.Api/Dockerfile
+    container_name: interviewhub-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # ASPNETCORE_ENVIRONMENT здесь, а не в .env: Production — не секрет,
+      # и от него зависит, будет ли засеян DemoContent (в проде — нет).
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: "8080"
+    env_file:
+      # ConnectionStrings__Default, Jwt__Key, Cors__AllowedOrigins__0,
+      # AllowedHosts, Bootstrap__Admin__* — см. .env.example.
+      - .env
+    # Healthcheck здесь намеренно не объявлен.
+    # В образе mcr.microsoft.com/dotnet/aspnet нет ни curl, ни wget, поэтому
+    # привычный `wget -qO- /health` держал бы контейнер вечно unhealthy
+    # (проверено). Ставить их ради пробы — тянуть пакетный менеджер
+    # в рантайм-слой. Живость API проверяет nginx фронтенда, который
+    # проксирует /health наружу, и внешний мониторинг по URL домена.
+    networks:
+      - backend
+    # Порт наружу НЕ публикуется — доступ через frontend.
+
+  frontend:
+    build:
+      context: ./frontend
+    image: interviewhub-frontend:latest
+    container_name: interviewhub-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    healthcheck:
+      # Проверяет весь путь наружу: nginx жив и доезжает до api:8080,
+      # а /health в API опрашивает ещё и Postgres (AddNpgSql).
+      # Проба стоит здесь, а не на api: в образе nginx:alpine есть wget,
+      # а в dotnet/aspnet — нет (см. комментарий у сервиса api).
+      # Именно 127.0.0.1, а не localhost: в контейнере localhost резолвится
+      # сперва в ::1, а nginx слушает только IPv4 — проба падала бы
+      # с "Connection refused" (проверено).
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health | grep -q Healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    networks:
+      - backend   # чтобы дойти до api:8080 (проксирование /api/, /health)
+      - proxy     # чтобы общий Caddy дошёл до interviewhub-frontend:80
+    # Порт наружу НЕ публикуется — вход только через Caddy.
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
+    driver: bridge
+  # Внешняя сеть общего Caddy (создаётся один раз: docker network create proxy).
+  proxy:
+    external: true

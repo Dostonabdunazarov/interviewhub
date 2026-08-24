@@ -1,0 +1,15 @@
+# Контекст сборки API — корень репозитория. Всё лишнее замедляет docker build
+# и ломает кеш слоёв при любой правке.
+**/bin
+**/obj
+frontend
+tests
+.git
+.github
+.vs
+.idea
+*.md
+.env
+.env.*
+docker-compose*.yml
+tools

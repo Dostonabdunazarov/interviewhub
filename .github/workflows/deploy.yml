@@ -1,0 +1,40 @@
+# Деплой на hypex.site: push в main → пересборка стека на сервере.
+# Требует секретов SSH_HOST / SSH_USER / SSH_PRIVATE_KEY в настройках репозитория
+# и подготовленного сервера (клон в /root/interviewhub + заполненный .env).
+# Подробности — в DEPLOY.md и корневом DEPLOY_HYPEX.md.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Параллельные деплои одного проекта наступали бы друг другу на ноги.
+concurrency:
+  group: deploy-interviewhub
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          # Сборка .NET + Vite с нуля не укладывается в дефолтные 10 минут.
+          command_timeout: 30m
+          script: |
+            set -e
+            cd /root/interviewhub
+            git fetch origin main
+            git reset --hard origin/main
+            docker network inspect proxy >/dev/null 2>&1 || docker network create proxy
+            docker compose -f docker-compose.hypex.yml up -d --build
+            # После пересборки контейнер получает новый IP в сети proxy.
+            # Нужен именно restart, не reload: reload не сбрасывает пул
+            # соединений Caddy к старому апстриму (DEPLOY_HYPEX.md, грабля №2).
+            cd /root/corpdev/infra && docker compose restart caddy
+            docker image prune -f
