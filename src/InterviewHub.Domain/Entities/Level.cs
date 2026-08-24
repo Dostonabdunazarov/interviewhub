@@ -3,7 +3,7 @@ using InterviewHub.Domain.Common;
 namespace InterviewHub.Domain.Entities;
 
 /// <summary>Грейд: intern / junior / middle / senior / lead.</summary>
-public class Level : BaseEntity
+public class Level : BaseEntity, ISluggable
 {
     public string Slug { get; set; } = null!;
     public string Name { get; set; } = null!;

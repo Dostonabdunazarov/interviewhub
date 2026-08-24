@@ -22,6 +22,13 @@ public class QuestionQuery
     public QuestionStatus? Status { get; set; }
 
     /// <summary>
+    /// Снимает фильтр по статусу совсем — админский список показывает и черновики.
+    /// Отдельный флаг, а не Status = null: у публичного запроса null означает
+    /// «только Published», и путать эти два случая нельзя.
+    /// </summary>
+    public bool IncludeAllStatuses { get; set; }
+
+    /// <summary>
     /// Nullable намеренно: при биндинге через [AsParameters] non-nullable enum
     /// становится обязательным query-параметром, и запрос без ?sort= падал бы с 400.
     /// </summary>

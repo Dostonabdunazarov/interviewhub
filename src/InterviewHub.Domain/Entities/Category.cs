@@ -3,7 +3,7 @@ using InterviewHub.Domain.Common;
 namespace InterviewHub.Domain.Entities;
 
 /// <summary>Тематический раздел: React, .NET, PostgreSQL, DevOps и т.д.</summary>
-public class Category : BaseEntity
+public class Category : BaseEntity, ISluggable
 {
     public string Slug { get; set; } = null!;
     public string Name { get; set; } = null!;

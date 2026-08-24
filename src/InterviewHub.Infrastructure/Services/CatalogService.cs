@@ -56,12 +56,15 @@ public sealed class CatalogService(AppDbContext db) : ICatalogService
             .FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<TagDto>> GetTagsAsync(CancellationToken ct = default) =>
+        // Фильтр и сортировка — по выражению над сущностью, а не по полю уже собранного DTO:
+        // Where поверх спроецированного TagDto Npgsql перевести не может и падает с 500.
         await db.Tags.AsNoTracking()
+            .Where(x => x.QuestionTags.Any(qt => qt.Question.Status == Visible))
+            .OrderByDescending(x => x.QuestionTags.Count(qt => qt.Question.Status == Visible))
+            .ThenBy(x => x.Name)
             .Select(x => new TagDto(
                 x.Id, x.Slug, x.Name,
                 x.QuestionTags.Count(qt => qt.Question.Status == Visible)))
-            .Where(x => x.QuestionCount > 0)
-            .OrderByDescending(x => x.QuestionCount).ThenBy(x => x.Name)
             .ToListAsync(ct);
 
     public async Task<StatsDto> GetStatsAsync(CancellationToken ct = default)

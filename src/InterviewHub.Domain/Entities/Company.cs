@@ -3,7 +3,7 @@ using InterviewHub.Domain.Common;
 namespace InterviewHub.Domain.Entities;
 
 /// <summary>Компания, в которой задавали вопрос: Google, Яндекс, Ozon и т.д.</summary>
-public class Company : BaseEntity
+public class Company : BaseEntity, ISluggable
 {
     public string Slug { get; set; } = null!;
     public string Name { get; set; } = null!;

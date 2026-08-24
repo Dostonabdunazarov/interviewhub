@@ -20,9 +20,11 @@ public sealed class QuestionService(AppDbContext db) : IQuestionService
         var q = db.Questions.AsNoTracking();
 
         // Status == null означает публичный запрос: гостям видно только опубликованное.
-        q = query.Status is null
-            ? q.Where(x => x.Status == QuestionStatus.Published)
-            : q.Where(x => x.Status == query.Status);
+        // IncludeAllStatuses снимает фильтр целиком — это админский список.
+        if (!query.IncludeAllStatuses)
+            q = query.Status is null
+                ? q.Where(x => x.Status == QuestionStatus.Published)
+                : q.Where(x => x.Status == query.Status);
 
         if (!string.IsNullOrWhiteSpace(query.Category))
             q = q.Where(x => x.Category.Slug == query.Category);
@@ -52,13 +54,16 @@ public sealed class QuestionService(AppDbContext db) : IQuestionService
 
         var total = await q.CountAsync(ct);
 
+        // Порядок по умолчанию — от простого к сложному: каталог открывают для
+        // подготовки, и начинать логично с лёгких вопросов. Newest остаётся
+        // доступным явно, но перестал быть значением по умолчанию.
         q = query.Sort switch
         {
+            QuestionSort.Newest => q.OrderByDescending(x => x.CreatedAt),
             QuestionSort.Oldest => q.OrderBy(x => x.CreatedAt),
             QuestionSort.Popular => q.OrderByDescending(x => x.ViewCount).ThenByDescending(x => x.CreatedAt),
-            QuestionSort.DifficultyAsc => q.OrderBy(x => x.Difficulty).ThenByDescending(x => x.CreatedAt),
             QuestionSort.DifficultyDesc => q.OrderByDescending(x => x.Difficulty).ThenByDescending(x => x.CreatedAt),
-            _ => q.OrderByDescending(x => x.CreatedAt)
+            _ => q.OrderBy(x => x.Difficulty).ThenByDescending(x => x.CreatedAt)
         };
 
         var items = await q
