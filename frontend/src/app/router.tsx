@@ -20,6 +20,7 @@ const LoginPage = lazy(() => import("../pages/admin/LoginPage"));
 import HomePage from "../pages/HomePage";
 import QuestionsPage from "../pages/QuestionsPage";
 import QuestionPage from "../pages/QuestionPage";
+import TheoryPage from "../pages/TheoryPage";
 import CategoryPage from "../pages/CategoryPage";
 import LevelsPage from "../pages/LevelsPage";
 import LevelPage from "../pages/LevelPage";
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
           { path: "/questions", element: <QuestionsPage /> },
           { path: "/questions/:slug", element: <QuestionPage /> },
           { path: "/categories/:slug", element: <CategoryPage /> },
+          { path: "/theory", element: <TheoryPage /> },
           { path: "/levels", element: <LevelsPage /> },
           { path: "/levels/:slug", element: <LevelPage /> },
           { path: "/companies", element: <CompaniesPage /> },

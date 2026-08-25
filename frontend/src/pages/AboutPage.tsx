@@ -3,6 +3,7 @@ import { ArrowUpRight, BookOpen, Building2, Layers, Mail, Search, Send } from "l
 import { useStats } from "../lib/hooks";
 import { Button } from "../components/ui/Button";
 import { formatCount } from "../lib/utils";
+import { Meta } from "../components/Meta";
 
 const FEATURES = [
   {
@@ -57,6 +58,12 @@ export default function AboutPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-page-x py-12">
+      <Meta
+        title="О проекте"
+        description="InterviewHub — база вопросов с реальных технических собеседований и разобранных ответов к ним."
+        path="/about"
+      />
+
       <h1 className="text-3xl font-semibold tracking-tight">О проекте</h1>
 
       <p className="mt-4 text-base leading-relaxed text-fg-muted">

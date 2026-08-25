@@ -4,6 +4,7 @@ import { useLevels } from "../lib/hooks";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState, ErrorState } from "../components/ui/States";
 import { formatCount } from "../lib/utils";
+import { Meta } from "../components/Meta";
 
 /**
  * Список грейдов. Отдельная страница нужна, чтобы на грейды можно было
@@ -20,6 +21,12 @@ export default function LevelsPage() {
 
   return (
     <div className="mx-auto max-w-content px-page-x py-10">
+      <Meta
+        title="Грейды"
+        description="Вопросы с собеседований по уровням: intern, junior, middle, senior и lead."
+        path="/levels"
+      />
+
       <h1 className="text-3xl font-semibold tracking-tight">Грейды</h1>
       <p className="mt-2 max-w-2xl text-sm text-fg-muted">
         Вопросы, сгруппированные по уровню позиции — от стажёра до лида.

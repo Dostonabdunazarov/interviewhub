@@ -8,6 +8,7 @@ import { CategoryIcon } from "../components/ui/CategoryIcon";
 import { QuestionCardSkeleton, Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/States";
 import { formatCount } from "../lib/utils";
+import { Meta } from "../components/Meta";
 
 function Hero() {
   return (
@@ -249,6 +250,13 @@ function PopularQuestions() {
 export default function HomePage() {
   return (
     <>
+      <Meta
+        bare
+        title="InterviewHub — подготовка к собеседованиям"
+        description="Вопросы с реальных технических собеседований и разобранные ответы: .NET, PostgreSQL, Kafka, микросервисы, алгоритмы и системный дизайн."
+        path="/"
+      />
+
       <Hero />
       <StatsRow />
       <Categories />

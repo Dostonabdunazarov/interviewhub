@@ -10,6 +10,7 @@ import { Pagination } from "../components/ui/Pagination";
 import { QuestionCardSkeleton } from "../components/ui/Skeleton";
 import { EmptyState, ErrorState } from "../components/ui/States";
 import { formatCount } from "../lib/utils";
+import { Meta } from "../components/Meta";
 import type { QuestionSort } from "../types/api";
 
 // Первым идёт вариант по умолчанию — так селект не выглядит переключённым
@@ -111,6 +112,12 @@ export default function QuestionsPage() {
 
   return (
     <div className="mx-auto max-w-content px-page-x py-10">
+      <Meta
+        title="Каталог вопросов"
+        description="Вопросы с реальных технических собеседований с разобранными ответами: фильтры по категориям, грейдам и компаниям."
+        path="/questions"
+      />
+
       <h1 className="text-3xl font-semibold tracking-tight">Каталог вопросов</h1>
       <p className="mt-1 text-sm text-fg-muted">
         {data ? `${formatCount(data.totalCount)} вопросов` : "Загружаем…"}

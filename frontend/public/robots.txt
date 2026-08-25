@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Админка в выдаче не нужна. Это не защита — она на ProtectedRoute и JWT,
+# а гигиена индекса: страницы за логином всё равно отдадут пустой SPA.
+Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://interview.hypex.site/sitemap.xml

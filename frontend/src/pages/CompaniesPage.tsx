@@ -5,12 +5,19 @@ import { CompanyLogo } from "../components/ui/CompanyLogo";
 import { Skeleton } from "../components/ui/Skeleton";
 import { EmptyState, ErrorState } from "../components/ui/States";
 import { formatCount } from "../lib/utils";
+import { Meta } from "../components/Meta";
 
 export default function CompaniesPage() {
   const { data, isLoading, isError, refetch } = useCompanies();
 
   return (
     <div className="mx-auto max-w-content px-page-x py-10">
+      <Meta
+        title="Компании"
+        description="Вопросы, которые задавали на собеседованиях в конкретных компаниях, с указанием этапа."
+        path="/companies"
+      />
+
       <h1 className="text-3xl font-semibold tracking-tight">Компании</h1>
       <p className="mt-2 max-w-2xl text-sm text-fg-muted">
         Вопросы, сгруппированные по компаниям — с годом и этапом собеседования,

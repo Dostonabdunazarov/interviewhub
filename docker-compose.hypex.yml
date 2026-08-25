@@ -47,6 +47,9 @@ services:
       # и от него зависит, будет ли засеян DemoContent (в проде — нет).
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: "8080"
+      # Абсолютные ссылки в sitemap.xml. Не секрет, но задан явно:
+      # при смене домена правится здесь, а не пересборкой образа.
+      Seo__BaseUrl: "https://interview.hypex.site"
     env_file:
       # ConnectionStrings__Default, Jwt__Key, Cors__AllowedOrigins__0,
       # AllowedHosts, Bootstrap__Admin__* — см. .env.example.

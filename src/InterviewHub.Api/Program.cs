@@ -73,6 +73,9 @@ builder.Services.AddCors(opt => opt.AddDefaultPolicy(policy => policy
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
+// Готовый XML карты сайта держим в памяти — см. SeoEndpoints.
+builder.Services.AddMemoryCache();
+
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Default")!, name: "postgres");
 
@@ -102,6 +105,7 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 app.MapPublicEndpoints();
+app.MapSeoEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
 

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Eye, Star } from "lucide-react";
 import { useQuestion } from "../lib/hooks";
 import { Markdown } from "../components/Markdown";
+import { Meta, stripMarkdown, truncate } from "../components/Meta";
 import { QuestionNav } from "../components/QuestionNav";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -101,8 +102,20 @@ export default function QuestionPage() {
     );
   }
 
+  // Описание для выдачи: сначала постановка вопроса, иначе основной ответ.
+  // У части вопросов body пустой — там заголовок и есть вся постановка.
+  const primaryAnswer = data.answers.find((a) => a.isPrimary) ?? data.answers[0];
+  const summarySource = data.body ?? primaryAnswer?.body ?? "";
+
   return (
     <article className="mx-auto max-w-3xl px-page-x py-10">
+      <Meta
+        title={data.title}
+        description={truncate(stripMarkdown(summarySource))}
+        path={`/questions/${data.slug}`}
+        type="article"
+      />
+
       <Link
         to="/questions"
         className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg"

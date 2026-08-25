@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useCompany } from "../lib/hooks";
 import { QuestionShowcase, ShowcaseCount } from "../components/QuestionShowcase";
+import { Meta } from "../components/Meta";
 import { CompanyLogo } from "../components/ui/CompanyLogo";
 import { Skeleton } from "../components/ui/Skeleton";
 
@@ -16,6 +17,17 @@ export default function CompanyPage() {
     </>
   ) : (
     <>
+      {company && (
+        <Meta
+          title={`Собеседования в ${company.name}`}
+          description={
+            company.description ??
+            `${company.questionCount} вопросов с собеседований в ${company.name} с разобранными ответами.`
+          }
+          path={`/companies/${company.slug}`}
+        />
+      )}
+
       <div className="flex items-center gap-3">
         {company && <CompanyLogo company={company} className="size-11 text-base" />}
         <h1 className="text-3xl font-semibold tracking-tight">{company?.name ?? slug}</h1>

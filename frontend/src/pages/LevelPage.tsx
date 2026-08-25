@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useLevels } from "../lib/hooks";
 import { QuestionShowcase, ShowcaseCount } from "../components/QuestionShowcase";
+import { Meta } from "../components/Meta";
 import { Skeleton } from "../components/ui/Skeleton";
 
 export default function LevelPage() {
@@ -15,6 +16,14 @@ export default function LevelPage() {
     </>
   ) : (
     <>
+      {level && (
+        <Meta
+          title={`Вопросы для ${level.name}`}
+          description={`${level.questionCount} вопросов с собеседований уровня ${level.name} с разобранными ответами.`}
+          path={`/levels/${level.slug}`}
+        />
+      )}
+
       <div className="flex items-center gap-3">
         {/* Цвет грейда — из БД (Levels.Color), хардкодить его планом запрещено. */}
         {level?.color && (

@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useCategories } from "../lib/hooks";
 import { QuestionShowcase, ShowcaseCount } from "../components/QuestionShowcase";
+import { Meta } from "../components/Meta";
 import { CategoryIcon } from "../components/ui/CategoryIcon";
 import { Skeleton } from "../components/ui/Skeleton";
 
@@ -19,6 +20,17 @@ export default function CategoryPage() {
     </>
   ) : (
     <>
+      {category && (
+        <Meta
+          title={`${category.name} — вопросы с собеседований`}
+          description={
+            category.description ??
+            `${category.questionCount} вопросов с собеседований по теме «${category.name}» с разобранными ответами.`
+          }
+          path={`/categories/${category.slug}`}
+        />
+      )}
+
       <div className="flex items-center gap-3">
         {category && (
           <span
