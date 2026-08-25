@@ -77,7 +77,10 @@ services:
       # Именно 127.0.0.1, а не localhost: в контейнере localhost резолвится
       # сперва в ::1, а nginx слушает только IPv4 — проба падала бы
       # с "Connection refused" (проверено).
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health | grep -q Healthy"]
+      # Заголовок Host обязателен: API в Production проверяет AllowedHosts и
+      # отвечает 400 на запрос с хостом 127.0.0.1. Без него проба всегда
+      # падала бы, а контейнер вечно висел unhealthy (проверено на сервере).
+      test: ["CMD-SHELL", "wget -qO- --header='Host: interview.hypex.site' http://127.0.0.1/health | grep -q Healthy"]
       interval: 30s
       timeout: 5s
       retries: 3
