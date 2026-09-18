@@ -29,3 +29,15 @@ public enum InterviewRound
     SystemDesign = 3,
     Final = 4
 }
+
+/// <summary>
+/// Видимость статьи теории. Повторяет <see cref="QuestionStatus"/>, но
+/// заводится отдельно: у статьи может появиться Review (вычитка), которого
+/// у вопроса нет, и общий enum это заблокировал бы.
+/// </summary>
+public enum TheoryStatus
+{
+    Draft = 1,
+    Published = 2,
+    Archived = 3
+}

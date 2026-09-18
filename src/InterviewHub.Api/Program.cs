@@ -26,6 +26,7 @@ builder.Services.AddScoped<AdminBootstrapper>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
+builder.Services.AddScoped<ITheoryService, TheoryService>();
 builder.Services.AddScoped<IQuestionAdminService, QuestionAdminService>();
 builder.Services.AddScoped<ICatalogAdminService, CatalogAdminService>();
 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
@@ -87,6 +88,11 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
     await DbSeeder.SeedAsync(db);
+
+    // Скелет теории — во всех средах, включая прод: статьи пишутся долго,
+    // а треки и разделы должны существовать заранее, чтобы SortOrder
+    // проставлялся один раз, а не пересчитывался при каждом добавлении.
+    await TheorySeeder.SeedAsync(db);
 
     // Демо-вопросы только вне прода: в проде контент наполняет админ.
     if (app.Environment.IsDevelopment())

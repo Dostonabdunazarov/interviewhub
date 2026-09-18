@@ -91,6 +91,24 @@ public static class SeoEndpoints
             .Select(c => c.Slug)
             .ToListAsync(ct);
 
+        // Теория: правило видимости то же, что в публичном API — опубликована
+        // и статья, и её трек. Иначе карта уведёт краулера на 404.
+        var theoryArticles = await db.TheoryArticles
+            .AsNoTracking()
+            .Where(a => a.Status == TheoryStatus.Published && a.Section.Track.IsPublished)
+            .OrderByDescending(a => a.UpdatedAt ?? a.CreatedAt)
+            .Select(a => new { a.Slug, a.UpdatedAt, a.CreatedAt })
+            .ToListAsync(ct);
+
+        // Трек без единой опубликованной статьи — пустая страница, в индексе мусор.
+        var theoryTracks = await db.TheoryTracks
+            .AsNoTracking()
+            .Where(t => t.IsPublished
+                        && t.Sections.Any(s => s.Articles.Any(a => a.Status == TheoryStatus.Published)))
+            .OrderBy(t => t.SortOrder)
+            .Select(t => t.Slug)
+            .ToListAsync(ct);
+
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLine("""<?xml version="1.0" encoding="UTF-8"?>""");
         sb.AppendLine("""<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">""");
@@ -111,6 +129,12 @@ public static class SeoEndpoints
 
         foreach (var slug in companies)
             Append(sb, baseUrl, $"/companies/{slug}", null);
+
+        foreach (var slug in theoryTracks)
+            Append(sb, baseUrl, $"/theory/{slug}", null);
+
+        foreach (var a in theoryArticles)
+            Append(sb, baseUrl, $"/theory/articles/{a.Slug}", a.UpdatedAt ?? a.CreatedAt);
 
         sb.AppendLine("</urlset>");
 

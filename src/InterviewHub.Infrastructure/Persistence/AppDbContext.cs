@@ -13,6 +13,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Answer> Answers => Set<Answer>();
     public DbSet<QuestionCompany> QuestionCompanies => Set<QuestionCompany>();
     public DbSet<QuestionTag> QuestionTags => Set<QuestionTag>();
+    public DbSet<TheoryTrack> TheoryTracks => Set<TheoryTrack>();
+    public DbSet<TheorySection> TheorySections => Set<TheorySection>();
+    public DbSet<TheoryArticle> TheoryArticles => Set<TheoryArticle>();
+    public DbSet<TheoryArticleQuestion> TheoryArticleQuestions => Set<TheoryArticleQuestion>();
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
@@ -25,12 +29,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public override Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         SyncSearchText();
+        SyncReadingMinutes();
         return base.SaveChangesAsync(ct);
     }
 
     public override int SaveChanges()
     {
         SyncSearchText();
+        SyncReadingMinutes();
         return base.SaveChanges();
     }
 
@@ -71,5 +77,45 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             var text = string.Join(' ', bodies).Trim();
             question.SearchText = text.Length == 0 ? null : text;
         }
+    }
+
+    /// <summary>
+    /// Пересчитывает TheoryArticle.ReadingMinutes по телу статьи. Здесь, а не
+    /// в сервисе, по той же причине, что и SearchText: значение обязано быть
+    /// согласовано с Body при любом пути записи, включая сидер и импорт.
+    /// </summary>
+    private void SyncReadingMinutes()
+    {
+        foreach (var entry in ChangeTracker.Entries<TheoryArticle>()
+                     .Where(e => e.State is EntityState.Added or EntityState.Modified))
+            entry.Entity.ReadingMinutes = EstimateReadingMinutes(entry.Entity.Body);
+    }
+
+    /// <summary>
+    /// 200 слов в минуту — общепринятая оценка для технического текста,
+    /// минимум 1 минута: «0 мин» в карточке выглядит как ошибка, а не как
+    /// короткая статья.
+    /// </summary>
+    internal static int EstimateReadingMinutes(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return 1;
+
+        var words = 0;
+        var inWord = false;
+
+        foreach (var ch in body)
+        {
+            if (char.IsWhiteSpace(ch))
+            {
+                inWord = false;
+            }
+            else if (!inWord)
+            {
+                inWord = true;
+                words++;
+            }
+        }
+
+        return Math.Max(1, (int)Math.Ceiling(words / 200.0));
     }
 }

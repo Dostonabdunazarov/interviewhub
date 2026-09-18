@@ -73,5 +73,27 @@ public static class PublicEndpoints
 
         api.MapGet("/stats", async (ICatalogService service, CancellationToken ct) =>
             Results.Ok(await service.GetStatsAsync(ct)));
+
+        // Дерево теории — один запрос на весь сайдбар, который есть на каждой
+        // странице раздела. Пустое дерево до наполнения — это { "tracks": [] },
+        // а не 404: фронт рисует пустое состояние, а не страницу ошибки.
+        api.MapGet("/theory/tree", async (ITheoryService service, CancellationToken ct) =>
+            Results.Ok(await service.GetTreeAsync(ct)));
+
+        api.MapGet("/theory/tracks/{slug}", async (
+            string slug, ITheoryService service, CancellationToken ct) =>
+        {
+            var track = await service.GetTrackBySlugAsync(slug, ct);
+            return track is null ? Results.NotFound() : Results.Ok(track);
+        });
+
+        // Плоский URL статьи: slug глобально уникален, чтобы перенос статьи
+        // в другой раздел не ломал ссылку.
+        api.MapGet("/theory/articles/{slug}", async (
+            string slug, ITheoryService service, CancellationToken ct) =>
+        {
+            var article = await service.GetArticleBySlugAsync(slug, ct);
+            return article is null ? Results.NotFound() : Results.Ok(article);
+        });
     }
 }
