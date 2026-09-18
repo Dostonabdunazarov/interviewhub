@@ -2,6 +2,7 @@ using System.Security.Claims;
 using InterviewHub.Api.Filters;
 using InterviewHub.Application.Common;
 using InterviewHub.Application.Dtos;
+using InterviewHub.Domain.Enums;
 using InterviewHub.Infrastructure.Services;
 
 namespace InterviewHub.Api.Endpoints;
@@ -24,7 +25,86 @@ public static class AdminEndpoints
         MapLevels(admin);
         MapCompanies(admin);
         MapTags(admin);
+        MapTheory(admin);
         MapUsers(admin);
+    }
+
+    private static void MapTheory(RouteGroupBuilder admin)
+    {
+        var theory = admin.MapGroup("/theory");
+
+        // Дерево целиком: в отличие от публичного показывает скрытые треки
+        // и пустые разделы — в них ещё предстоит класть статьи.
+        theory.MapGet("/tree", async (ITheoryAdminService service, CancellationToken ct) =>
+            Results.Ok(await service.GetTreeAsync(ct)));
+
+        var tracks = theory.MapGroup("/tracks");
+
+        tracks.MapPost("/", async (
+            TheoryTrackInput input, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.CreateTrackAsync(input, ct))
+                .ToHttpResult(v => Results.Created($"/api/admin/theory/tracks/{v.Id}", v)))
+            .Validate<TheoryTrackInput>();
+
+        tracks.MapPut("/{id:guid}", async (
+            Guid id, TheoryTrackInput input, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.UpdateTrackAsync(id, input, ct)).ToHttpResult(Results.Ok))
+            .Validate<TheoryTrackInput>();
+
+        tracks.MapDelete("/{id:guid}", async (
+            Guid id, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.DeleteTrackAsync(id, ct)).ToHttpResult());
+
+        var sections = theory.MapGroup("/sections");
+
+        sections.MapPost("/", async (
+            TheorySectionInput input, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.CreateSectionAsync(input, ct))
+                .ToHttpResult(v => Results.Created($"/api/admin/theory/sections/{v.Id}", v)))
+            .Validate<TheorySectionInput>();
+
+        sections.MapPut("/{id:guid}", async (
+            Guid id, TheorySectionInput input, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.UpdateSectionAsync(id, input, ct)).ToHttpResult(Results.Ok))
+            .Validate<TheorySectionInput>();
+
+        sections.MapDelete("/{id:guid}", async (
+            Guid id, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.DeleteSectionAsync(id, ct)).ToHttpResult());
+
+        var articles = theory.MapGroup("/articles");
+
+        articles.MapGet("/", async (
+            ITheoryAdminService service,
+            CancellationToken ct,
+            Guid? sectionId = null,
+            Guid? trackId = null,
+            TheoryStatus? status = null,
+            string? q = null) =>
+            Results.Ok(await service.GetArticlesAsync(sectionId, trackId, status, q, ct)));
+
+        articles.MapGet("/{id:guid}", async (
+            Guid id, ITheoryAdminService service, CancellationToken ct) =>
+        {
+            var article = await service.GetArticleByIdAsync(id, ct);
+            return article is null ? Results.NotFound() : Results.Ok(article);
+        });
+
+        articles.MapPost("/", async (
+            TheoryArticleInput input, ITheoryAdminService service,
+            ClaimsPrincipal user, CancellationToken ct) =>
+            (await service.CreateArticleAsync(input, user.GetUserId(), ct))
+                .ToHttpResult(v => Results.Created($"/api/admin/theory/articles/{v.Id}", v)))
+            .Validate<TheoryArticleInput>();
+
+        articles.MapPut("/{id:guid}", async (
+            Guid id, TheoryArticleInput input, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.UpdateArticleAsync(id, input, ct)).ToHttpResult(Results.Ok))
+            .Validate<TheoryArticleInput>();
+
+        articles.MapDelete("/{id:guid}", async (
+            Guid id, ITheoryAdminService service, CancellationToken ct) =>
+            (await service.DeleteArticleAsync(id, ct)).ToHttpResult());
     }
 
     private static void MapQuestions(RouteGroupBuilder admin)

@@ -298,5 +298,8 @@ public sealed class QuestionAdminService(AppDbContext db) : IQuestionAdminServic
                 .ThenBy(a => a.SortOrder)
                 .Select(a => new AnswerDto(
                     a.Id, a.Body, a.IsPrimary, a.SortOrder, a.CreatedAt, a.UpdatedAt))
-                .ToList());
+                .ToList(),
+            // Привязками к теории управляет редактор статьи, а не вопроса:
+            // в админском ответе этот блок пустой намеренно.
+            new List<TheoryArticleRefDto>());
 }

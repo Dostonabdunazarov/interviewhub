@@ -131,3 +131,45 @@ internal sealed class PasswordValidator : AbstractValidator<string>
             .WithMessage("Пароль должен содержать буквы и цифры.");
     }
 }
+
+public sealed class TheoryTrackInputValidator : AbstractValidator<TheoryTrackInput>
+{
+    public TheoryTrackInputValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
+        RuleFor(x => x.Slug).MaximumLength(128);
+        RuleFor(x => x.Icon).MaximumLength(64);
+        RuleFor(x => x.Color).MaximumLength(32);
+        RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+    }
+}
+
+public sealed class TheorySectionInputValidator : AbstractValidator<TheorySectionInput>
+{
+    public TheorySectionInputValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(256);
+        RuleFor(x => x.Slug).MaximumLength(128);
+        RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.TrackId).NotEmpty();
+    }
+}
+
+/// <summary>
+/// Body обязателен, в отличие от постановки вопроса: статья без текста — это
+/// не черновик заголовка, а пустая страница, на которую уже ведёт сайдбар.
+/// </summary>
+public sealed class TheoryArticleInputValidator : AbstractValidator<TheoryArticleInput>
+{
+    public TheoryArticleInputValidator()
+    {
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(512);
+        RuleFor(x => x.Slug).MaximumLength(256);
+        RuleFor(x => x.Summary).MaximumLength(1024);
+        RuleFor(x => x.Body).NotEmpty();
+        RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Status).IsInEnum();
+        RuleFor(x => x.SectionId).NotEmpty();
+        RuleForEach(x => x.QuestionIds!).NotEmpty().When(x => x.QuestionIds is not null);
+    }
+}

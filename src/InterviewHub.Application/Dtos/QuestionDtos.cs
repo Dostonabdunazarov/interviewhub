@@ -34,7 +34,12 @@ public record QuestionDetailDto(
     RefDto Level,
     IReadOnlyList<CompanyRefDto> Companies,
     IReadOnlyList<RefDto> Tags,
-    IReadOnlyList<AnswerDto> Answers);
+    IReadOnlyList<AnswerDto> Answers,
+    /// <summary>Статьи теории, к которым привязан вопрос — блок «Теория по теме».</summary>
+    IReadOnlyList<TheoryArticleRefDto> TheoryArticles);
+
+/// <summary>Ссылка на статью теории со страницы вопроса.</summary>
+public record TheoryArticleRefDto(string Slug, string Title, int ReadingMinutes);
 
 public record AnswerDto(
     Guid Id, string Body, bool IsPrimary, int SortOrder,

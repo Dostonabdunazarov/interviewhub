@@ -29,6 +29,7 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<ITheoryService, TheoryService>();
 builder.Services.AddScoped<IQuestionAdminService, QuestionAdminService>();
 builder.Services.AddScoped<ICatalogAdminService, CatalogAdminService>();
+builder.Services.AddScoped<ITheoryAdminService, TheoryAdminService>();
 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 
 // Валидаторы админских DTO живут в Application рядом с самими DTO.

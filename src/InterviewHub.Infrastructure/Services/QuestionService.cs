@@ -122,6 +122,18 @@ public sealed class QuestionService(AppDbContext db) : IQuestionService
                     .ThenBy(a => a.SortOrder)
                     .Select(a => new AnswerDto(
                         a.Id, a.Body, a.IsPrimary, a.SortOrder, a.CreatedAt, a.UpdatedAt))
+                    .ToList(),
+                // Обратная сторона связи из статьи: «Теория по теме». Правило
+                // видимости то же, что в разделе теории, — опубликованы
+                // и статья, и её трек.
+                db.TheoryArticleQuestions
+                    .Where(aq => aq.QuestionId == x.Id
+                                 && aq.Article.Status == TheoryStatus.Published
+                                 && aq.Article.Section.Track.IsPublished)
+                    .OrderBy(aq => aq.Article.Section.Track.SortOrder)
+                    .ThenBy(aq => aq.Article.SortOrder)
+                    .Select(aq => new TheoryArticleRefDto(
+                        aq.Article.Slug, aq.Article.Title, aq.Article.ReadingMinutes))
                     .ToList()))
             .FirstOrDefaultAsync(ct);
 
