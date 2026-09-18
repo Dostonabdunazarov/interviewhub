@@ -1,5 +1,13 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { ExternalLink, FileQuestion, LayoutDashboard, LogOut, Tags, Users } from "lucide-react";
+import {
+  BookOpen,
+  ExternalLink,
+  FileQuestion,
+  LayoutDashboard,
+  LogOut,
+  Tags,
+  Users,
+} from "lucide-react";
 import { logout } from "../lib/api";
 import { isAdmin, useAuthStore } from "../store/authStore";
 import { ThemeToggle } from "./ThemeToggle";
@@ -8,6 +16,7 @@ import { cn } from "../lib/utils";
 const NAV = [
   { to: "/admin", label: "Дашборд", icon: LayoutDashboard, end: true },
   { to: "/admin/questions", label: "Вопросы", icon: FileQuestion, end: false },
+  { to: "/admin/theory", label: "Теория", icon: BookOpen, end: false },
   { to: "/admin/references", label: "Справочники", icon: Tags, end: false },
 ];
 

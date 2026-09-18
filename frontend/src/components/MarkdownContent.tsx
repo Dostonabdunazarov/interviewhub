@@ -1,6 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { extractHeadings } from "../lib/headings";
 import { cn } from "../lib/utils";
 
 /**
@@ -159,11 +160,51 @@ const MarkdownContent = memo(function MarkdownContent({
   children: string;
   className?: string;
 }) {
+  /*
+    Якоря для оглавления статьи. Список считаем из того же исходника одним
+    проходом и выдаём по порядку, а не пересчитываем id в каждом заголовке:
+    так нумерация дублей гарантированно совпадает с оглавлением.
+    Очередь на каждый рендер своя — иначе второй рендер начал бы с конца.
+  */
+  const anchors = extractHeadings(children);
+  const anchorQueue = { h2: 0, h3: 0 };
+
+  const nextAnchorId = (level: 2 | 3) => {
+    const seen = level === 2 ? anchorQueue.h2++ : anchorQueue.h3++;
+    let index = -1;
+    for (let i = 0, n = 0; i < anchors.length; i++) {
+      if (anchors[i].level !== level) continue;
+      if (n++ === seen) {
+        index = i;
+        break;
+      }
+    }
+    return index === -1 ? undefined : anchors[index].id;
+  };
+
   return (
     <div className={cn("ih-prose", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          // id нужны оглавлению статьи; scroll-mt — чтобы липкий хедер
+          // не накрывал заголовок при переходе по якорю.
+          h2({ children: content, node: _node, ...props }) {
+            return (
+              <h2 id={nextAnchorId(2)} className="scroll-mt-(--size-header)" {...props}>
+                {content}
+              </h2>
+            );
+          },
+
+          h3({ children: content, node: _node, ...props }) {
+            return (
+              <h3 id={nextAnchorId(3)} className="scroll-mt-(--size-header)" {...props}>
+                {content}
+              </h3>
+            );
+          },
+
           // node из props вынимается и отбрасывается: react-markdown передаёт
           // в нём своё AST, и спред в DOM давал бы node="[object Object]".
           code({ className: cls, children: content, node: _node, ...props }) {

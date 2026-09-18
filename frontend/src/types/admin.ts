@@ -2,7 +2,7 @@
  * Тела запросов админского API. Соответствуют `Application/Dtos/AdminDtos.cs`.
  * Ответы переиспользуют публичные типы из `./api`.
  */
-import type { InterviewRound, QuestionStatus, UserRole } from "./api";
+import type { InterviewRound, QuestionStatus, TheoryStatus, UserRole } from "./api";
 
 export interface QuestionCompanyInput {
   companyId: string;
@@ -75,4 +75,38 @@ export interface UserCreateInput extends UserInput {
 
 export interface ChangePasswordInput {
   newPassword: string;
+}
+
+// ── Теория ──────────────────────────────────────────────────────────────────
+
+export interface TheoryTrackInput {
+  name: string;
+  slug: string | null;
+  description: string | null;
+  /** Имя иконки lucide в kebab-case. */
+  icon: string | null;
+  color: string | null;
+  sortOrder: number;
+  isPublished: boolean;
+}
+
+export interface TheorySectionInput {
+  name: string;
+  slug: string | null;
+  description: string | null;
+  sortOrder: number;
+  trackId: string;
+}
+
+/** readingMinutes здесь нет: его считает бэкенд из body. */
+export interface TheoryArticleInput {
+  title: string;
+  slug: string | null;
+  summary: string | null;
+  body: string;
+  sortOrder: number;
+  status: TheoryStatus;
+  sectionId: string;
+  levelId: string | null;
+  questionIds: string[];
 }

@@ -114,6 +114,15 @@ export interface QuestionDetail {
   companies: CompanyRef[];
   tags: Ref[];
   answers: Answer[];
+  /** Статьи теории, к которым привязан вопрос — блок «Теория по теме». */
+  theoryArticles: TheoryArticleRef[];
+}
+
+/** Ссылка на статью теории со страницы вопроса. */
+export interface TheoryArticleRef {
+  slug: string;
+  title: string;
+  readingMinutes: number;
 }
 
 // ── Справочники ─────────────────────────────────────────────────────────────
@@ -164,6 +173,162 @@ export interface Stats {
   totalCategories: number;
   byLevel: Level[];
   byCategory: Category[];
+}
+
+// ── Теория ──────────────────────────────────────────────────────────
+
+/** Статус статьи. Совпадает с TheoryStatus в Domain/Enums/Enums.cs. */
+export const TheoryStatus = {
+  Draft: 1,
+  Published: 2,
+  Archived: 3,
+} as const;
+export type TheoryStatus = (typeof TheoryStatus)[keyof typeof TheoryStatus];
+
+/** Статья в дереве — без тела: в сайдбаре нужен только заголовок. */
+export interface TheoryArticleNode {
+  slug: string;
+  title: string;
+  summary: string | null;
+  readingMinutes: number;
+  level: Ref | null;
+}
+
+export interface TheorySectionNode {
+  slug: string;
+  name: string;
+  description: string | null;
+  articleCount: number;
+  articles: TheoryArticleNode[];
+}
+
+export interface TheoryTrackNode {
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  articleCount: number;
+  sections: TheorySectionNode[];
+}
+
+/** Всё дерево теории одним ответом — один запрос на весь сайдбар. */
+export interface TheoryTree {
+  tracks: TheoryTrackNode[];
+}
+
+/** Обзор трека: те же разделы плюс сводка по объёму. */
+export interface TheoryTrackDetail {
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  articleCount: number;
+  readingMinutes: number;
+  sections: TheorySectionNode[];
+}
+
+/** Путь к статье: Теория → Трек → Раздел. У раздела своего URL нет. */
+export interface TheoryBreadcrumb {
+  trackSlug: string;
+  trackName: string;
+  sectionSlug: string;
+  sectionName: string;
+}
+
+export interface TheoryArticleLink {
+  slug: string;
+  title: string;
+  readingMinutes: number;
+}
+
+/** Вопрос каталога, привязанный к статье («Проверь себя»). */
+export interface TheoryRelatedQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  difficulty: number;
+  level: Ref;
+}
+
+export interface TheoryArticleDetail {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  readingMinutes: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+  status: TheoryStatus;
+  level: Ref | null;
+  breadcrumb: TheoryBreadcrumb;
+  previous: TheoryArticleLink | null;
+  next: TheoryArticleLink | null;
+  relatedQuestions: TheoryRelatedQuestion[];
+}
+
+/** Трек в админском дереве: со скрытыми разделами и черновиками. */
+export interface TheoryTrackAdmin {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  sortOrder: number;
+  isPublished: boolean;
+  articleCount: number;
+  sections: TheorySectionAdmin[];
+}
+
+export interface TheorySectionAdmin {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  articleCount: number;
+}
+
+/** Строка админского списка статей — без тела. */
+export interface TheoryArticleListItem {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  sortOrder: number;
+  status: TheoryStatus;
+  readingMinutes: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+  sectionId: string;
+  sectionName: string;
+  trackName: string;
+  level: Ref | null;
+  relatedQuestionCount: number;
+}
+
+/** Статья в редакторе: тело плюс привязанные вопросы. */
+export interface TheoryArticleAdmin {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  sortOrder: number;
+  status: TheoryStatus;
+  readingMinutes: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+  sectionId: string;
+  trackId: string;
+  levelId: string | null;
+  relatedQuestions: TheoryRelatedQuestion[];
 }
 
 // ── Аутентификация ──────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Eye, Star } from "lucide-react";
+import { ArrowLeft, BookOpen, Eye, Star } from "lucide-react";
 import { useQuestion } from "../lib/hooks";
 import { Markdown } from "../components/Markdown";
 import { Meta, stripMarkdown, truncate } from "../components/Meta";
@@ -169,6 +169,39 @@ export default function QuestionPage() {
           ))
         )}
       </section>
+
+      {/*
+        Обратная сторона связи со статьёй: из вопроса можно уйти в связный
+        текст. Стоит сразу после ответов — это следующий шаг после «понял
+        ответ», а компании и теги ниже относятся к самому вопросу.
+      */}
+      {data.theoryArticles.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-fg-subtle">
+            Теория по теме
+          </h2>
+          <ul className="mt-3 flex flex-col gap-2">
+            {data.theoryArticles.map((a) => (
+              <li key={a.slug}>
+                <Link
+                  to={`/theory/articles/${a.slug}`}
+                  className="group flex items-center gap-3 rounded-card border
+                             border-border-subtle bg-surface px-4 py-3 transition-colors
+                             hover:border-border-strong"
+                >
+                  <BookOpen size={16} className="shrink-0 text-fg-subtle" />
+                  <span className="min-w-0 flex-1 text-sm transition-colors group-hover:text-accent">
+                    {a.title}
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-fg-subtle">
+                    {a.readingMinutes} мин
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {data.companies.length > 0 && (
         <section className="mt-10">

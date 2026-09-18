@@ -13,6 +13,11 @@ import type {
   QuestionListItem,
   Tag,
   AuthUser,
+  TheoryArticleAdmin,
+  TheoryArticleListItem,
+  TheoryStatus,
+  TheorySectionAdmin,
+  TheoryTrackAdmin,
 } from "../types/api";
 import type {
   AnswerInput,
@@ -21,6 +26,9 @@ import type {
   LevelInput,
   QuestionInput,
   TagInput,
+  TheoryArticleInput,
+  TheorySectionInput,
+  TheoryTrackInput,
   UserCreateInput,
   UserInput,
 } from "../types/admin";
@@ -30,7 +38,19 @@ export const adminKeys = {
   question: (id: string) => ["admin", "question", id] as const,
   tags: () => ["admin", "tags"] as const,
   users: () => ["admin", "users"] as const,
+  theoryTree: () => ["admin", "theory", "tree"] as const,
+  theoryArticles: (params: TheoryArticleQueryParams) =>
+    ["admin", "theory", "articles", params] as const,
+  theoryArticle: (id: string) => ["admin", "theory", "article", id] as const,
 };
+
+/** Фильтры админского списка статей. */
+export interface TheoryArticleQueryParams {
+  sectionId?: string;
+  trackId?: string;
+  status?: TheoryStatus;
+  q?: string;
+}
 
 function cleanParams(params: AdminQuestionQueryParams): Record<string, string | number | boolean> {
   return Object.fromEntries(
@@ -40,9 +60,15 @@ function cleanParams(params: AdminQuestionQueryParams): Record<string, string | 
 
 // ── Запросы ─────────────────────────────────────────────────────────────────
 
-export function useAdminQuestions(params: AdminQuestionQueryParams = {}) {
+/**
+ * Список вопросов для админки. `enabled` нужен подбору вопросов в редакторе
+ * статьи: пустой поиск не должен уходить на сервер, а pageSize: 0 от этого
+ * не спасает — QuestionQuery поднимает его обратно до 20.
+ */
+export function useAdminQuestions(params: AdminQuestionQueryParams = {}, enabled = true) {
   return useQuery({
     queryKey: adminKeys.questions(params),
+    enabled,
     queryFn: async () =>
       (
         await api.get<PagedResult<QuestionListItem>>("/admin/questions", {
@@ -88,7 +114,7 @@ export function useUsers() {
 function useAdminMutation<TArgs, TResult>(
   mutationFn: (args: TArgs) => Promise<TResult>,
   successMessage: string | ((result: TResult) => string),
-  invalidate: "content" | "references" | "users",
+  invalidate: "content" | "references" | "users" | "theory",
 ) {
   const queryClient = useQueryClient();
 
@@ -103,6 +129,11 @@ function useAdminMutation<TArgs, TResult>(
       // поэтому проще сбросить всё, чем перечислять затронутые ключи.
       if (invalidate === "users") {
         void queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+      } else if (invalidate === "theory") {
+        // Публичное дерево бэкенд сбрасывает сам, но react-query держит
+        // своё на час — без явного сброса правка не доедет до сайдбара.
+        void queryClient.invalidateQueries({ queryKey: ["admin", "theory"] });
+        void queryClient.invalidateQueries({ queryKey: ["theory"] });
       } else {
         void queryClient.invalidateQueries({ queryKey: ["admin"] });
         void queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
@@ -323,5 +354,121 @@ export function useChangePassword() {
     },
     "Пароль изменён",
     "users",
+  );
+}
+
+// Теория
+
+/** Дерево для админки: со скрытыми треками и пустыми разделами. */
+export function useAdminTheoryTree() {
+  return useQuery({
+    queryKey: adminKeys.theoryTree(),
+    queryFn: async () => (await api.get<TheoryTrackAdmin[]>("/admin/theory/tree")).data,
+  });
+}
+
+export function useAdminTheoryArticles(params: TheoryArticleQueryParams = {}) {
+  return useQuery({
+    queryKey: adminKeys.theoryArticles(params),
+    queryFn: async () =>
+      (
+        await api.get<TheoryArticleListItem[]>("/admin/theory/articles", {
+          params: Object.fromEntries(
+            Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ""),
+          ),
+        })
+      ).data,
+  });
+}
+
+export function useAdminTheoryArticle(id: string | undefined) {
+  return useQuery({
+    queryKey: adminKeys.theoryArticle(id ?? ""),
+    enabled: Boolean(id),
+    queryFn: async () => (await api.get<TheoryArticleAdmin>(`/admin/theory/articles/${id}`)).data,
+  });
+}
+
+export function useCreateTheoryTrack() {
+  return useAdminMutation(
+    async (input: TheoryTrackInput) =>
+      (await api.post<TheoryTrackAdmin>("/admin/theory/tracks", input)).data,
+    "Трек создан",
+    "theory",
+  );
+}
+
+export function useUpdateTheoryTrack() {
+  return useAdminMutation(
+    async ({ id, input }: { id: string; input: TheoryTrackInput }) =>
+      (await api.put<TheoryTrackAdmin>(`/admin/theory/tracks/${id}`, input)).data,
+    "Трек сохранён",
+    "theory",
+  );
+}
+
+export function useDeleteTheoryTrack() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/theory/tracks/${id}`);
+    },
+    "Трек удалён",
+    "theory",
+  );
+}
+
+export function useCreateTheorySection() {
+  return useAdminMutation(
+    async (input: TheorySectionInput) =>
+      (await api.post<TheorySectionAdmin>("/admin/theory/sections", input)).data,
+    "Раздел создан",
+    "theory",
+  );
+}
+
+export function useUpdateTheorySection() {
+  return useAdminMutation(
+    async ({ id, input }: { id: string; input: TheorySectionInput }) =>
+      (await api.put<TheorySectionAdmin>(`/admin/theory/sections/${id}`, input)).data,
+    "Раздел сохранён",
+    "theory",
+  );
+}
+
+export function useDeleteTheorySection() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/theory/sections/${id}`);
+    },
+    "Раздел удалён",
+    "theory",
+  );
+}
+
+export function useCreateTheoryArticle() {
+  return useAdminMutation(
+    async (input: TheoryArticleInput) =>
+      (await api.post<TheoryArticleAdmin>("/admin/theory/articles", input)).data,
+    "Статья создана",
+    "theory",
+  );
+}
+
+export function useUpdateTheoryArticle() {
+  return useAdminMutation(
+    async ({ id, input }: { id: string; input: TheoryArticleInput }) =>
+      (await api.put<TheoryArticleAdmin>(`/admin/theory/articles/${id}`, input)).data,
+    "Статья сохранена",
+    "theory",
+  );
+}
+
+export function useDeleteTheoryArticle() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/theory/articles/${id}`);
+    },
+    "Статья удалена",
+    "theory",
   );
 }
