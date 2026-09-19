@@ -181,7 +181,7 @@ export default function QuestionsPage() {
             {isError ? (
               <ErrorState onRetry={() => refetch()} />
             ) : isLoading ? (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                 {Array.from({ length: 6 }, (_, i) => (
                   <QuestionCardSkeleton key={i} />
                 ))}
@@ -204,7 +204,7 @@ export default function QuestionsPage() {
               />
             ) : (
               <>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                   {data?.items.map((question, i) => (
                     <QuestionCard key={question.id} question={question} index={i} />
                   ))}
