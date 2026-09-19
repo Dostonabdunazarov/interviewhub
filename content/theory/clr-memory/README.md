@@ -1,6 +1,6 @@
-# Раздел «Язык C#» — исходники статей
+# Раздел «CLR и память» — исходники статей
 
-Статьи трека `.NET Backend` → раздела `csharp-lang`. Метаданные — во
+Статьи трека `.NET Backend` → раздела `clr-memory`. Метаданные — во
 фронтматтере каждого файла, тело — markdown под ним.
 
 ## Как залить в базу
@@ -50,31 +50,36 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 | Файл | Заголовок | Slug | Порядок |
 | --- | --- | --- | --- |
-| `01-value-type-i-reference-type.md` | Value type и reference type: в чём разница | `value-type-i-reference-type` | 1 |
-| `02-upakovka-i-raspakovka.md` | Упаковка и распаковка | `upakovka-i-raspakovka` | 2 |
-| `03-class-struct-record.md` | class, struct и record: что выбрать | `class-struct-record` | 3 |
-| `04-stroki-i-stringbuilder.md` | Строки и StringBuilder | `stroki-i-stringbuilder` | 4 |
-| `05-equals-gethashcode-operator.md` | Equals, GetHashCode и ==: как устроено равенство | `equals-gethashcode-operator` | 5 |
-| `06-delegaty-i-sobytiya.md` | Делегаты и события | `delegaty-i-sobytiya` | 6 |
-| `07-linq-i-otlozhennoe-vypolnenie.md` | LINQ и отложенное выполнение | `linq-i-otlozhennoe-vypolnenie` | 7 |
-| `08-ienumerable-vs-iqueryable.md` | IEnumerable vs IQueryable | `ienumerable-vs-iqueryable` | 8 |
-| `09-yield-return.md` | yield return и итераторы | `yield-return` | 9 |
-| `10-nullable-reference-types.md` | Nullable reference types | `nullable-reference-types` | 10 |
-| `11-pattern-matching.md` | Pattern matching | `pattern-matching` | 11 |
-| `12-kovariantnost.md` | Ковариантность и контравариантность | `kovariantnost` | 12 |
+| `01-clr-il-jit.md` | CLR, IL и JIT | `clr-il-jit` | 1 |
+| `02-stek-i-kucha.md` | Стек и куча | `stek-i-kucha` | 2 |
+| `03-kak-rabotaet-gc.md` | Как работает GC | `kak-rabotaet-gc` | 3 |
+| `04-pokoleniya-gen0-gen2.md` | Поколения Gen 0–2 | `pokoleniya-gen0-gen2` | 4 |
+| `05-loh-i-fragmentaciya.md` | LOH и фрагментация | `loh-i-fragmentaciya` | 5 |
+| `06-gc-root-i-weakreference.md` | GC Root и WeakReference | `gc-root-i-weakreference` | 6 |
+| `07-idisposable-using-finalizatory.md` | IDisposable, using и финализаторы | `idisposable-using-finalizatory` | 7 |
+| `08-utechki-pamyati.md` | Утечки памяти в managed-коде | `utechki-pamyati` | 8 |
+| `09-span-i-memory.md` | Span<T> и Memory<T> | `span-i-memory` | 9 |
+| `10-snizhenie-allokaciy.md` | Снижение аллокаций | `snizhenie-allokaciy` | 10 |
 
-Все двенадцать — трек `dotnet-backend`, раздел `csharp-lang`, грейд `middle`.
+Все десять — трек `dotnet-backend`, раздел `clr-memory`, грейд `middle`.
 
 ## Чтобы статьи стали видны гостям
 
 Нужны **оба** условия: статус статьи `Published` и трек `IsPublished = true`.
-Трек публикуется в админке переключателем «виден» — сидер создаёт треки
-скрытыми намеренно, чтобы в сайдбаре не появился трек с одной статьёй
-из тридцати.
+Трек `dotnet-backend` уже опубликован разделом `csharp-lang`, так что
+для этого раздела достаточно опубликовать сами статьи.
 
 ## Раздел написан целиком
 
-Все 12 статей по плану (`THEORY_PLAN.md`) написаны. Числа про аллокации
-в статьях 05–12 — замеренные на .NET 10.0.10 через
-`GC.GetAllocatedBytesForCurrentThread()`, а не взятые по памяти.
-При правке таких утверждений замер стоит повторить.
+Все 10 статей по плану (`THEORY_PLAN.md`) написаны. Числа про аллокации,
+поколения, финализацию и слабые ссылки — замеренные на .NET 10.0.10
+(Workstation GC, x64) через `GC.GetAllocatedBytesForCurrentThread()`,
+`GC.GetGeneration()` и `GC.CollectionCount()`, а не взятые по памяти.
+
+Два замера пришлось переделать, и это стоит помнить при правках:
+
+- **счётчик финализаций** загрязнялся прогревом замерочного цикла —
+  объекты нужно создавать в отдельном методе с `[MethodImpl(NoInlining)]`;
+- **слабая ссылка** не обнулялась, пока объект создавался в теле того же
+  метода: в Release локальная переменная остаётся корнем до последнего
+  использования. Объект тоже нужно создавать в отдельном методе.
