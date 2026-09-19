@@ -32,8 +32,13 @@ export function TheoryLayout() {
         <TheorySidebar />
       </aside>
 
-      {/* Контент ограничен по ширине: длинная строка не читается. */}
-      <div className="min-w-0 flex-1 lg:max-w-3xl">
+      {/*
+        Контент ограничен по ширине: длинная строка не читается. `mx-auto`
+        центрирует колонку в остатке после сайдбара, а распорка-зеркало
+        ниже уравнивает этот остаток — иначе на широком экране текст
+        уезжал влево, прижимаясь к сайдбару.
+      */}
+      <div className="mx-auto min-w-0 flex-1 lg:max-w-3xl">
         {/* Кнопка содержания — только там, где колонки нет. */}
         <button
           type="button"
@@ -47,6 +52,13 @@ export function TheoryLayout() {
 
         <Outlet />
       </div>
+
+      {/*
+        Распорка-зеркало сайдбара. Без неё колонка текста центрируется
+        в остатке контейнера и всё равно оказывается левее середины
+        страницы на ширину сайдбара. Ширина и gap совпадают с aside.
+      */}
+      <div className="hidden w-70 shrink-0 lg:block" aria-hidden="true" />
 
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
