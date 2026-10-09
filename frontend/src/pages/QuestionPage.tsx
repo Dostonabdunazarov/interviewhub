@@ -66,7 +66,7 @@ function AnswerBlock({ answer, index }: { answer: Answer; index: number }) {
 
 function DetailSkeleton() {
   return (
-    <div className="mx-auto max-w-3xl px-page-x py-10">
+    <div className="mx-auto max-w-5xl px-page-x py-10">
       <Skeleton className="h-4 w-24" />
       <Skeleton className="mt-6 h-9 w-full" />
       <Skeleton className="mt-2 h-9 w-2/3" />
@@ -87,7 +87,7 @@ export default function QuestionPage() {
 
   if (isError || !data) {
     return (
-      <div className="mx-auto max-w-3xl px-page-x py-16">
+      <div className="mx-auto max-w-5xl px-page-x py-16">
         <ErrorState
           title="Вопрос не найден"
           description="Возможно, он снят с публикации или ссылка устарела."
@@ -108,7 +108,7 @@ export default function QuestionPage() {
   const summarySource = data.body ?? primaryAnswer?.body ?? "";
 
   return (
-    <article className="mx-auto max-w-3xl px-page-x py-10">
+    <article className="mx-auto max-w-5xl px-page-x py-10">
       <Meta
         title={data.title}
         description={truncate(stripMarkdown(summarySource))}
