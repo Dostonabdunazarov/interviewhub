@@ -206,7 +206,12 @@ export default function QuestionsPage() {
               <>
                 <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                   {data?.items.map((question, i) => (
-                    <QuestionCard key={question.id} question={question} index={i} />
+                    <QuestionCard
+                      key={question.id}
+                      question={question}
+                      index={i}
+                      number={(page - 1) * PAGE_SIZE + i + 1}
+                    />
                   ))}
                 </div>
 

@@ -10,7 +10,15 @@ import type { QuestionListItem } from "../types/api";
 /** Сколько логотипов компаний влезает в карточку до «+N». */
 const MAX_COMPANIES = 3;
 
-export function QuestionCard({ question, index = 0 }: { question: QuestionListItem; index?: number }) {
+export function QuestionCard({
+  question,
+  index = 0,
+  number,
+}: {
+  question: QuestionListItem;
+  index?: number;
+  number?: number;
+}) {
   const extraCompanies = question.companies.length - MAX_COMPANIES;
 
   return (
@@ -25,6 +33,9 @@ export function QuestionCard({ question, index = 0 }: { question: QuestionListIt
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-base font-medium leading-snug">
+          {number !== undefined && (
+            <span className="mr-2 font-mono text-sm tabular-nums text-fg-muted">{number}.</span>
+          )}
           <Link
             to={`/questions/${question.slug}`}
             className="transition-colors after:absolute after:inset-0 group-hover:text-accent"
