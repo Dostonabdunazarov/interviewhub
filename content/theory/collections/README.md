@@ -21,7 +21,7 @@ node tools/import-theory.mjs \
 # флаг виден в списке процессов и остаётся в history шелла):
 IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
   --url https://interview.hypex.site \
-  --email admin@interview.hypex.site
+  --email admin@hypex.site
 ```
 
 По умолчанию статьи создаются **черновиками** и существующие не трогаются.

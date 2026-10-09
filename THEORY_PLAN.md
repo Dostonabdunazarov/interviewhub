@@ -1,16 +1,23 @@
 # План: раздел «Теория»
 
-> **Статус на 2026-09-19.** Этапы 1–5 сделаны, закоммичены и выкачены в прод.
-> Идёт этап 6 — написание статей: **38 из ~198 написаны и опубликованы**.
+> **Статус на 2026-10-09.** Этапы 1–5 сделаны, закоммичены и выкачены в прод.
+> Этап 6: **все 192 статьи написаны** (28 разделов), опубликованы 38 —
+> куски 1–4. Остальные 154 лежат в `content/theory/<раздел>/` и ещё
+> не импортированы.
 >
 > ## С чего начать в следующий раз
 >
-> **Куски 1–4 закрыты полностью и видны на проде:** `csharp-lang` (12),
-> `clr-memory` (10), `async-await` (10) и `collections` (6). Проверено
-> 2026-09-19 — `/api/theory/tree` отдаёт все четыре раздела гостю,
-> все 38 слагов дают 200, в карте сайта 39 URL.
+> **Импорт и публикация куски 5–28:** для каждого раздела
+> `node tools/import-theory.mjs --dir content/theory/<раздел> --update --publish`
+> (прод, `admin@hypex.site`), затем включить треки `distributed`, `algorithms`,
+> `infrastructure`, `interview`, `code-design` переключателем «виден».
+> Что стоит вычитать в первую очередь — в README каждого раздела, блок
+> про непроверенные утверждения.
 >
-> Следующий — **кусок 5: `concurrency`, 11 статей с нуля**.
+> Куски 1–4 видны на проде с 2026-09-19. При написании остальных в них
+> поправлен размер стека потока: замер на .NET 10 под Windows дал 1,5 МБ,
+> а не 1 МБ (`Стек и куча`, две статьи `async-await`) — их тоже перезалить
+> с `--update`.
 >
 > Порядок разделов в сайдбаре задаёт `TheorySeeder.cs`, и он не совпадает
 > с порядком кусков: `collections` стоит вторым, сразу после `csharp-lang`.
@@ -656,32 +663,32 @@ public class TheoryArticleQuestion
 | 2 | `clr-memory` — CLR и память | dotnet-backend | 10 | 0 | **опубликован 2026-09-19** |
 | 3 | `async-await` — Асинхронность | dotnet-backend | 10 | 0 | **опубликован 2026-09-19** |
 | 4 | `collections` — Коллекции | dotnet-backend | 6 | 0 | **опубликован 2026-09-19** |
-| 5 | `concurrency` — Многопоточность | dotnet-backend | 11 | 11 | |
-| 6 | `aspnet-core` — ASP.NET Core | dotnet-backend | 9 | 9 | |
-| 7 | `ef-core` — EF Core и данные | dotnet-backend | 7 | 7 | |
-| 8 | `postgresql` — PostgreSQL | dotnet-backend | 8 | 8 | |
-| 9 | `performance` — Производительность | dotnet-backend | 7 | 7 | |
-| 10 | `system-design-basics` | distributed | 7 | 7 | |
-| 11 | `consistency` — Согласованность | distributed | 10 | 10 | |
-| 12 | `reliability` — Надёжность | distributed | 7 | 7 | |
-| 13 | `data-at-scale` — Данные под нагрузкой | distributed | 6 | 6 | |
-| 14 | `messaging` — Kafka и очереди | distributed | 6 | 6 | |
-| 15 | `microservices` — Микросервисы | distributed | 6 | 6 | |
-| 16 | `design-drills` — Разбор задач | distributed | 6 | 6 | |
-| 17 | `complexity` — Сложность | algorithms | 3 | 3 | |
-| 18 | `data-structures` — Структуры данных | algorithms | 5 | 5 | |
-| 19 | `techniques` — Приёмы | algorithms | 6 | 6 | |
-| 20 | `drills` — Типовые задачи | algorithms | 6 | 6 | |
-| 21 | `containers` — Контейнеры и K8s | infrastructure | 4 | 4 | |
-| 22 | `observability` — Наблюдаемость | infrastructure | 6 | 6 | |
-| 23 | `delivery` — Доставка | infrastructure | 4 | 4 | |
-| 24 | `process` — Процесс | interview | 4 | 4 | |
-| 25 | `soft-skills` — Soft skills | interview | 8 | 8 | |
-| 26 | `oop-solid` — ООП и SOLID | code-design | 4 | 4 | |
-| 27 | `patterns` — Паттерны | code-design | 8 | 8 | |
-| 28 | `app-architecture` — Архитектура приложения | code-design | 6 | 6 | |
+| 5 | `concurrency` — Многопоточность | dotnet-backend | 11 | 0 | написан 2026-10-09, не опубликован |
+| 6 | `aspnet-core` — ASP.NET Core | dotnet-backend | 9 | 0 | написан 2026-10-09, не опубликован |
+| 7 | `ef-core` — EF Core и данные | dotnet-backend | 7 | 0 | написан 2026-10-09, не опубликован |
+| 8 | `postgresql` — PostgreSQL | dotnet-backend | 8 | 0 | написан 2026-10-09, не опубликован |
+| 9 | `performance` — Производительность | dotnet-backend | 7 | 0 | написан 2026-10-09, не опубликован |
+| 10 | `system-design-basics` | distributed | 7 | 0 | написан 2026-10-09, не опубликован |
+| 11 | `consistency` — Согласованность | distributed | 10 | 0 | написан 2026-10-09, не опубликован |
+| 12 | `reliability` — Надёжность | distributed | 7 | 0 | написан 2026-10-09, не опубликован |
+| 13 | `data-at-scale` — Данные под нагрузкой | distributed | 6 | 0 | написан 2026-10-09, не опубликован |
+| 14 | `messaging` — Kafka и очереди | distributed | 6 | 0 | написан 2026-10-09, не опубликован |
+| 15 | `microservices` — Микросервисы | distributed | 6 | 0 | написан 2026-10-09, не опубликован |
+| 16 | `design-drills` — Разбор задач | distributed | 6 | 0 | написан 2026-10-09, не опубликован |
+| 17 | `complexity` — Сложность | algorithms | 3 | 0 | написан 2026-10-09, не опубликован |
+| 18 | `data-structures` — Структуры данных | algorithms | 5 | 0 | написан 2026-10-09, не опубликован |
+| 19 | `techniques` — Приёмы | algorithms | 6 | 0 | написан 2026-10-09, не опубликован |
+| 20 | `drills` — Типовые задачи | algorithms | 6 | 0 | написан 2026-10-09, не опубликован |
+| 21 | `containers` — Контейнеры и K8s | infrastructure | 4 | 0 | написан 2026-10-09, не опубликован |
+| 22 | `observability` — Наблюдаемость | infrastructure | 6 | 0 | написан 2026-10-09, не опубликован |
+| 23 | `delivery` — Доставка | infrastructure | 4 | 0 | написан 2026-10-09, не опубликован |
+| 24 | `process` — Процесс | interview | 4 | 0 | написан 2026-10-09, не опубликован |
+| 25 | `soft-skills` — Soft skills | interview | 8 | 0 | написан 2026-10-09, не опубликован |
+| 26 | `oop-solid` — ООП и SOLID | code-design | 4 | 0 | написан 2026-10-09, не опубликован |
+| 27 | `patterns` — Паттерны | code-design | 8 | 0 | написан 2026-10-09, не опубликован |
+| 28 | `app-architecture` — Архитектура приложения | code-design | 6 | 0 | написан 2026-10-09, не опубликован |
 
-**Итого 198 статей в 28 разделах, написано 38, осталось 160.**
+**Итого 192 статьи в 28 разделах (таблица давала 198 — ошибка суммы), все написаны; опубликовано 38.**
 
 Порядок внутри `dotnet-backend` отличается от строки в этапе 6 выше
 (`csharp-lang` → `clr-memory` → `async-await` → `postgresql` → `aspnet-core`)
