@@ -1080,7 +1080,7 @@ public sealed class CheckoutService(OrderRepository repository, PaymentClient pa
 }
 ```
 
-`StartActivity` вернёт `null`, если на источник никто не подписан или спан не прошёл сэмплирование — отсюда `?.` и практически нулевая стоимость выключенной инструментации. Имя источника в `AddSource` должно совпадать, иначе спаны молча теряются — самая частая причина «почему моих спанов нет». `Activity.AddException` появился в .NET 9; в более ранних версиях используют `RecordException` из пакета OpenTelemetry.
+`StartActivity` вернёт `null`, если на источник никто не подписан, — отсюда `?.` и практически нулевая стоимость выключенной инструментации. Если же спан не прошёл сэмплирование, OpenTelemetry SDK всё равно создаёт `Activity` ради передачи контекста дальше, но с `Recorded = false` и `IsAllDataRequested = false`; дорогие атрибуты поэтому вычисляют только при `activity?.IsAllDataRequested == true`. Имя источника в `AddSource` должно совпадать, иначе спаны молча теряются — самая частая причина «почему моих спанов нет». `Activity.AddException` появился в .NET 9; в более ранних версиях используют `RecordException` из пакета OpenTelemetry.
 
 **Подводные камни:**
 
