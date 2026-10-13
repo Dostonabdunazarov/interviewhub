@@ -6,6 +6,7 @@ section: ef-core
 level: middle
 sortOrder: 3
 summary: Что происходит между ToListAsync и SQL, что EF умеет переводить и во что, где параметр, а где литерал, как работает null-семантика, где разрешена клиентская часть и как увидеть итоговый запрос.
+questions: ef-core-kak-posmotret-sql-kotoryi-generiruet-ef-core, ef-core-kogda-realno-vypolnyaetsya-linq-zapros, ef-core-chem-ienumerable-otlichaetsya-ot-iqueryable-v-ef-core, ef-core-chto-takoe-compiled-query, ef-core-kogda-compiled-queries-polezny
 ---
 
 Статья `IEnumerable vs IQueryable` объясняет, почему `Where` над `IQueryable` уезжает в базу: цепочка хранит дерево выражений, а не делегаты. Здесь — следующий шаг: что EF Core делает с этим деревом, во что превращаются конкретные методы C#, когда значение становится параметром, а когда вклеивается в текст, и почему один и тот же LINQ может дать разный SQL. Весь SQL ниже сгенерирован Npgsql-провайдером EF Core 10 через `ToQueryString()`, в некоторых местах сокращён список колонок.

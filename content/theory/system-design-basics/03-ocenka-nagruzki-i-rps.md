@@ -6,6 +6,7 @@ section: system-design-basics
 level: middle
 sortOrder: 3
 summary: Как за пять минут прикинуть RPS, объём хранения и трафик от DAU, где в оценках ошибаются в разы и как из цифр получить число серверов и размер пулов.
+questions: system-design-kak-ocenit-nagruzku-sistemy, system-design-chto-takoe-rps-qps, system-design-kak-ocenit-kolichestvo-polzovatelei, system-design-kak-ocenit-storage-requirements, system-design-kak-ocenit-network-bandwidth
 ---
 
 Оценка нагрузки на дизайн-секции — это не бухгалтерия, а способ превратить разговор о «масштабируемости» в разговор о конкретных компонентах. Точность нужна до порядка: важно понять, 100 RPS у системы или 100 000, терабайт данных или петабайт, потому что это разные архитектуры. Ниже — формулы, сквозной пример и типичные ошибки, которые портят оценку в восемь и больше раз.

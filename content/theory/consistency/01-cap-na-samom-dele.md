@@ -6,6 +6,7 @@ section: consistency
 level: middle
 sortOrder: 1
 summary: Что именно доказали Gilbert и Lynch, почему P — не буква на выбор, а факт жизни, отчего ярлыки «CP» и «AP» для баз почти ничего не значат и как превратить теорему в вопрос к каждой операции.
+questions: distributed-systems-chto-realno-utverzhdaet-cap-teorema-i-kakie-vyvody-iz-nee-delayut-neve, system-design-senior-kak-reshat-konflikt-mezhdu-consistency-i-availability-v-oplate-zakaza, distributed-systems-chto-dobavlyaet-pacelc-k-cap-i-pochemu-latency-vazhna-ne-menshe-consis
 ---
 
 CAP-теорему знают все, и почти все пересказывают её неточно: «из трёх свойств — согласованность, доступность, устойчивость к разделению — можно выбрать любые два». На собеседовании эта формулировка — красный флаг. Теорема утверждает узкую и строго определённую вещь, а большинство выводов, которые из неё делают, она не поддерживает. Эта статья открывает раздел: дальше `PACELC` добавит задержку, `Модели согласованности` разберут, что бывает между «строго» и «как получится», а остальные статьи — механизмы, которыми эти гарантии добываются.

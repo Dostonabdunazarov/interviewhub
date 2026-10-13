@@ -6,6 +6,7 @@ section: postgresql
 level: middle
 sortOrder: 1
 summary: Как устроены три главных типа индексов PostgreSQL, какие запросы обслуживает каждый, правило ведущего префикса, частичные и покрывающие индексы и чем индекс платит за ускорение чтения.
+questions: postgresql-kakie-tipy-indeksov-est-v-postgresql, postgresql-chto-takoe-b-tree-index, postgresql-chto-takoe-composite-index, postgresql-v-kakom-poryadke-vybirat-kolonki-dlya-composite-index, postgresql-chto-takoe-gin, postgresql-chto-takoe-brin, postgresql-chto-takoe-partial-index, postgresql-chto-takoe-expression-index
 ---
 
 Индекс в PostgreSQL — отдельная структура рядом с таблицей, которая по значению ключа находит адреса строк. Встроенных типов шесть: B-tree, Hash, GiST, SP-GiST, GIN и BRIN. На собеседовании почти всегда спрашивают про три из них — B-tree как индекс по умолчанию, GIN для «составных» значений и BRIN для огромных таблиц, — и про то, почему подходящий на вид индекс не используется.

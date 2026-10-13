@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 6
 summary: Что в .NET атомарно само по себе, как работают Interlocked и CAS-цикл, почему общий атомарный счётчик не масштабируется, что такое false sharing и ABA, и когда Interlocked, а когда lock.
+questions: multithreading-chto-takoe-interlocked, multithreading-chto-takoe-atomic-operation, multithreading-kogda-ispolzovat-interlocked-a-kogda-lock, advanced-concurrency-kak-realizovat-potokobezopasnyi-schetchik-cherez-cas-i-pochemu-naivnyi, advanced-concurrency-chto-takoe-aba-problema-i-kakimi-sposobami-ee-reshayut, multithreading-chto-takoe-false-sharing, advanced-concurrency-chto-takoe-false-sharing-i-kak-ego-obnaruzhit-v-realnom-kode, advanced-concurrency-kogda-lock-free-struktura-realno-bystree-blokirovki-a-kogda-tolko-uslo
 ---
 
 Атомарная операция для других потоков выглядит неделимой: они видят состояние либо до неё, либо после, но никогда промежуточное. Часть операций атомарна в .NET сама по себе, часть становится атомарной через `Interlocked`, а всё остальное требует блокировки. Граница между этими тремя группами — частый вопрос на собеседовании.

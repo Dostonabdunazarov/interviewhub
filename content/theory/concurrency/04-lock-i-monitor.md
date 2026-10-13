@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 4
 summary: Во что компилируется lock, как Monitor хранит состояние в заголовке объекта, что изменил System.Threading.Lock в .NET 9, сколько стоит блокировка с конкуренцией и без, зачем Wait/Pulse и почему внутри lock нельзя await.
+questions: multithreading-chto-delaet-lock, multithreading-chem-lock-otlichaetsya-ot-monitor, multithreading-kak-rabotaet-monitor, multithreading-chto-takoe-critical-section, multithreading-chto-takoe-lock-contention, multithreading-pochemu-nelzya-delat-await-vnutri-obychnogo-lock
 ---
 
 `lock` — основной инструмент взаимного исключения в C#: блок кода для одного и того же объекта блокировки выполняет не больше одного потока одновременно. Он прост в использовании, но за ним стоит механизм CLR — `Monitor`, — и понимание этого механизма объясняет и цену блокировки, и её ограничения, и то, почему в .NET 9 появился отдельный тип `Lock`.

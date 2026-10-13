@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 8
 summary: Как течёт память там, где есть сборщик мусора: статические коллекции, события, таймеры, замыкания, и как искать утечку по дампу.
+questions: clr-gc-chto-takoe-memory-leak-v-net, clr-gc-mozhet-li-managed-prilozhenie-imet-memory-leak, clr-gc-kak-mozhno-diagnostirovat-problemy-s-pamyatyu, performance-profiling-potreblenie-pamyati-postoyanno-rastet-kak-vystroit-rassledovanie, performance-profiling-kak-proanalizirovat-damp-pamyati-i-naiti-istochnik-utechki, advanced-aspnet-pochemu-zahvat-scoped-servisa-v-singleton-privodit-k-utechke-i-kak-eto
 ---
 
 «В .NET утечек не бывает, есть же сборщик» — заблуждение, которое разваливается на первом же продакшене. GC освобождает **недостижимые** объекты; если объект достижим, но уже не нужен, он останется в памяти навсегда. Это и есть managed-утечка: не потерянный указатель, как в C++, а забытая ссылка.

@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 9
 summary: Кооперативная отмена, отличие отменённой задачи от упавшей, связанные токены и почему OperationCanceledException не нужно логировать как ошибку.
+questions: async-kak-rabotaet-cancellationtoken, async-kak-pravilno-otmenyat-async-operation, async-kak-sdelat-timeout-dlya-async-operacii, advanced-concurrency-pochemu-cancellationtoken-mozhet-ne-ostanovit-operaciyu-i-kak-sdelat-o, advanced-aspnet-kak-pravilno-probrosit-cancellationtoken-do-bazy-dannyh-i-chto-daet-ot
 ---
 
 В .NET нельзя прервать выполнение чужого кода насильно — `Thread.Abort` удалён как небезопасный. Отмена здесь **кооперативная**: вызывающий сообщает о желании отменить, а исполнитель сам проверяет сигнал в подходящих местах. Инструмент для этого — `CancellationToken`.

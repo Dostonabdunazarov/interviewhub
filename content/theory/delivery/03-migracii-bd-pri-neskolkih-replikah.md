@@ -6,6 +6,7 @@ section: delivery
 level: senior
 sortOrder: 3
 summary: Почему миграции не применяют на старте каждого пода, как вынести их в отдельный Job или Helm-хук перед раскаткой, как растянуть ломающее изменение схемы на несколько релизов так, чтобы откат оставался возможным, и что делать, когда миграция упала посередине.
+questions: devops-senior-kak-nakatyvat-migracii-bazy-dannyh-pri-neskolkih-instansah-prilozheniy, devops-senior-kak-ustroen-rolling-deployment-i-chto-proizoidet-pri-nesovmestimoi-mig, advanced-postgresql-kak-menyat-shemu-bolshoi-tablicy-ne-blokiruya-zapis-nadolgo, advanced-postgresql-kak-bezopasno-sozdat-indeks-na-bolshoi-tablice-v-prodakshene
 ---
 
 Пока у сервиса одна реплика и деплой с простоем, миграции можно применять как угодно. С несколькими репликами и rolling update появляются три новых факта. Реплики стартуют одновременно. Какое-то время старый и новый код работают с одной и той же схемой. И откат кода не откатывает базу. Как EF Core вычисляет миграции, чем опасен сгенерированный `RENAME` и что лежит в `__EFMigrationsHistory`, разобрано в статье `Миграции`. Здесь — уровень доставки: где миграции выполняются, в каком порядке с раскаткой кода и как не потерять возможность отката.

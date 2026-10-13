@@ -6,6 +6,7 @@ section: messaging
 level: senior
 sortOrder: 6
 summary: Почему в Kafka нет встроенного retry для consumer'а, как отличить poison message от временного сбоя, как устроены локальные повторы, retry-топики с задержкой через Pause/Resume и dead letter topic, и что при этом происходит с порядком по ключу.
+questions: kafka-advanced-kak-obrabatyvat-poison-message-ne-ostanavlivaya-obrabotku-vsei-partici, kafka-chto-delat-s-poison-message, kafka-chto-takoe-dead-letter-topic-queue, kafka-advanced-kak-realizovat-retry-s-zaderzhkoi-ne-blokiruya-particiyu, kafka-kak-realizovat-retry-dlya-kafka, kafka-chto-takoe-retry
 ---
 
 В RabbitMQ неудачное сообщение можно отклонить, и брокер сам переложит его в dead letter exchange. В Kafka такого нет: сообщение нельзя «вернуть в очередь», можно только не сдвигать offset или переопубликовать его в другой топик. Поэтому повторы и DLQ в Kafka — это архитектура приложения, а не настройка брокера. На собеседовании здесь проверяют три вещи: умеешь ли ты отличить плохое сообщение от сломанной зависимости, не блокируешь ли партицию и что делаешь с порядком.

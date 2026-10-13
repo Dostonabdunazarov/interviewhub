@@ -6,6 +6,7 @@ section: app-architecture
 level: senior
 sortOrder: 2
 summary: Что на самом деле даёт правило зависимостей Clean Architecture, как проверять его автоматически, во что обходится строгое соблюдение и какие компромиссы и альтернативы — вертикальные слайсы — выбирают зрелые команды.
+questions: architecture-patterns-chto-daet-clean-architecture-i-kakova-cena-ee-strogogo-soblyudeniya, architecture-patterns-chem-geksagonalnaya-arhitektura-otlichaetsya-ot-sloenoi-na-praktike
 ---
 
 Clean Architecture — самый популярный шаблон .NET-решения последних лет: четыре проекта, `Domain` в центре, `Infrastructure` снаружи, MediatR между ними. Шаблон легко скопировать, и его часто копируют туда, где он не нужен: в CRUD-сервис из пятнадцати эндпоинтов, где добавление одного поля в карточку требует правки восьми файлов. На собеседовании senior-уровня вопрос звучит не «что такое Clean Architecture», а «что она даёт и сколько стоит» — и ждут ответа, в котором есть обе половины.

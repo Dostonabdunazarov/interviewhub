@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 3
 summary: Две независимые оси — семантика передачи и семантика равенства, — и как по ним выбирается вид типа.
+questions: csharp-chem-otlichayutsya-record-class-i-struct, csharp-chem-class-otlichaetsya-ot-struct, csharp-chto-takoe-init-accessor, csharp-chto-takoe-immutable-object-i-zachem-on-nuzhen
 ---
 
 В C# четыре способа объявить тип с данными: `class`, `struct`, `record` и `record struct`. Различаются они по двум независимым осям — как тип передаётся и как он сравнивается, — и путаница обычно возникает из-за того, что эти оси считают одной.

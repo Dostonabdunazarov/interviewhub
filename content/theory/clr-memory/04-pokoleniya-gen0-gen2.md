@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 4
 summary: Гипотеза о поколениях, как объект стареет, почему Gen 0 почти бесплатен, барьер записи и промежуточное поколение долгоживущих объектов.
+questions: clr-gc-chto-takoe-gen-0-gen-1-i-gen-2, clr-gc-kogda-obekt-popadaet-v-gen-1-ili-gen-2, clr-gc-pochemu-v-net-ispolzuetsya-pokolencheskii-gc, dotnet-gc-generations, clr-gc-chto-takoe-gc-collect-i-pochemu-obychno-ne-stoit-vyzyvat-ego-vruchnuyu
 ---
 
 Деление кучи на поколения — главная оптимизация сборщика мусора, и вся она держится на одном наблюдении о том, как программы используют память. Понимание этой схемы объясняет и почему короткоживущие объекты почти бесплатны, и почему `GC.Collect()` делает хуже.

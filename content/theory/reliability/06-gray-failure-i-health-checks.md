@@ -6,6 +6,7 @@ section: reliability
 level: senior
 sortOrder: 6
 summary: Что такое частичный отказ, при котором мониторинг видит здоровый сервис, а клиенты — сломанный, почему медленный узел опаснее упавшего, как ловить такие отказы глазами клиента через outlier detection и сравнение с соседями и чем смягчать их в .NET.
+questions: distributed-systems-chto-takoe-gray-failure-i-pochemu-health-check-ego-ne-zamechaet, distributed-systems-kak-otlichit-medlennyi-servis-ot-upavshego-i-pochemu-eto-principialno, advanced-aspnet-pochemu-health-check-mozhet-otvechat-ok-kogda-prilozhenie-fakticheski, microservices-kak-obnaruzhivat-padenie-servisa, microservices-liveness-vs-readiness, microservices-chto-takoe-health-check
 ---
 
 Самые неприятные отказы — не те, когда сервис упал. Упавший сервис отвечает быстро и однозначно: connection refused, `503` от балансировщика, красный дашборд, сработавший failover. Неприятнее, когда сервис формально жив: процесс работает, health check зелёный, средняя доля ошибок ниже порога алерта, а пользователи жалуются, что «иногда всё виснет». Это gray failure — частичный отказ, при котором компонент выглядит здоровым для системы мониторинга, но плохо работает для реальных клиентов.

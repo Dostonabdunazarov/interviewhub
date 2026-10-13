@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 6
 summary: Что делает объект достижимым, полный список корней, короткие и длинные слабые ссылки и когда кэш на WeakReference — правильное решение.
+questions: clr-gc-chto-takoe-gc-root, clr-gc-chto-takoe-weakreference, clr-gc-kak-gc-opredelyaet-kakie-obekty-bolshe-ne-nuzhny, clr-gc-mozhet-li-gc-udalit-obekty-kotorye-ssylayutsya-drug-na-druga, advanced-csharp-chto-delaet-gc-keepalive-i-fixed-i-pochemu-bez-nih-unsafe-kod-mozhet-c
 ---
 
 Объект жив ровно до тех пор, пока до него можно добраться от корня. Не «пока на него есть ссылки» — циклические ссылки между двумя мёртвыми объектами не спасают ни один из них, — а именно **достижим от корня**. Разобраться, что такое корень, полезно вдвойне: это и ответ на вопрос о работе GC, и инструмент поиска утечек.

@@ -6,6 +6,7 @@ section: performance
 level: middle
 sortOrder: 2
 summary: Два первых инструмента при деградации сервиса — числа рантайма и трассировка со стеками, как их снимать в проде и как читать результат.
+questions: performance-profiling-kakie-metriki-dotnet-counters-smotret-pervymi-pri-degradacii-proizvodi, performance-profiling-kak-snyat-trassirovku-v-prode-cherez-dotnet-trace-ne-uroniv-servis, performance-profiling-kak-naiti-prichinu-100-zagruzki-cpu-esli-nagruzka-ne-izmenilas
 ---
 
 Когда сервис стал медленнее, первое желание — открыть код и искать «что тут тормозит». Это почти всегда дольше, чем спросить у самого рантайма. Для этого есть два инструмента, которые отвечают на разные вопросы: `dotnet-counters` показывает **что происходит** — числа по CPU, GC, пулу потоков, исключениям, а `dotnet-trace` показывает **где** — стеки и события с отметками времени. Сначала счётчики сужают гипотезу, потом трассировка находит конкретное место.

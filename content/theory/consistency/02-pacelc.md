@@ -6,6 +6,7 @@ section: consistency
 level: senior
 sortOrder: 2
 summary: Как PACELC Дэниела Абади дополняет CAP нормальным режимом работы, откуда берётся компромисс между задержкой и согласованностью без всяких сбоев, как классифицируются системы и как сдвинуть этот выбор на уровень отдельной транзакции.
+questions: distributed-systems-chto-dobavlyaet-pacelc-k-cap-i-pochemu-latency-vazhna-ne-menshe-consis, system-design-senior-kak-obespechit-konsistentnost-dannyh-v-multi-region-arhitekture, system-design-senior-kak-sproektirovat-geo-raspredelennuyu-sistemu-dlya-polzovatelei-na-raz
 ---
 
 CAP говорит только о моменте, когда сеть уже разделилась. Но разделения редки, а система работает каждую секунду — и всё это время платит за согласованность задержкой. PACELC, предложенный Дэниелом Абади, делает этот повседневный компромисс явным. На собеседовании его спрашивают как продолжение разговора о CAP, и сильный ответ здесь отличается от слабого тем, что кандидат может объяснить, откуда берутся миллисекунды и где ими управлять в настройках конкретной базы. Сама CAP разобрана в статье `CAP на самом деле`.

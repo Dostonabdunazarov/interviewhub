@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 1
 summary: Что происходит между исходником и машинным кодом, зачем нужен промежуточный язык, как работает JIT и чем от него отличаются ReadyToRun и AOT.
+questions: clr-gc-chto-proishodit-s-c-kodom-ot-kompilyacii-do-vypolneniya, clr-gc-chto-takoe-clr, clr-gc-chto-takoe-il, clr-gc-chto-takoe-jit, advanced-csharp-kak-rabotaet-tiered-compilation-i-pochemu-pervye-vyzovy-metoda-mogut-b, advanced-csharp-kak-readytorun-i-nativeaot-vliyayut-na-vremya-starta-pikovuyu-proizvod
 ---
 
 Компилятор C# не производит машинного кода. Он производит **промежуточный язык** — IL, — а превращением IL в инструкции процессора занимается среда выполнения уже во время работы программы. Этот двухэтапный путь объясняет многое: и почему .NET-сборка запускается на разных платформах, и почему первый вызов метода медленнее последующих, и как код умудряется оптимизироваться под конкретный процессор.

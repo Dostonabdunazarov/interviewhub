@@ -6,6 +6,7 @@ section: system-design-basics
 level: senior
 sortOrder: 6
 summary: Что такое узкое место, почему задержка растёт нелинейно задолго до 100% загрузки, как искать его сверху вниз — метрики, трейсы, профилирование — и как прогнозировать, что сломается при росте ×10.
+questions: system-design-kak-obnaruzhit-i-ustranit-bottleneck, system-design-chto-takoe-bottleneck, system-design-chto-delat-pri-roste-nagruzki-v-10-raz, performance-profiling-kak-naiti-uzkoe-mesto-esli-kazhdyi-servis-po-otdelnosti-vyglyadit-byst
 ---
 
 Узкое место — компонент, который первым достигает предела и ограничивает пропускную способность или задержку всей системы. Пока оно не расширено, масштабирование всего остального бесполезно: API подняли с 4 до 20 подов, а RPS вырос на 10%, зато выросло время ответа — потому что все поды стоят в очереди к одной PostgreSQL. На дизайн-секции вопрос «что сломается первым?» звучит почти всегда, а на работе тот же навык отличает исправление от покупки лишнего железа.

@@ -6,6 +6,7 @@ section: data-at-scale
 level: senior
 sortOrder: 5
 summary: Почему истечение одного популярного ключа может уронить базу, как защищаются объединением запросов, распределённым lease, soft и hard TTL, вероятностным ранним обновлением и джиттером, и чем stampede отличается от лавины и проникновения.
+questions: system-design-senior-kak-predotvratit-cache-stampede-pri-invalidacii-populyarnogo-klyucha, microservices-chto-takoe-cache-stampede, system-design-senior-kak-sproektirovat-kesh-na-desyatki-terabait-i-chto-delat-pri-potere-kl
 ---
 
 Cache stampede, он же dogpile или thundering herd, случается, когда ключ, который читают тысячи раз в секунду, исчезает из кэша, и все эти запросы одновременно идут пересчитывать значение в базу. Кэш при этом исправен, и база тоже — до того момента, пока на неё не обрушится несколько тысяч одинаковых тяжёлых запросов. Защита строится на трёх идеях: пересчитывает кто-то один, остальные тем временем получают устаревшее значение, а самые популярные ключи вообще не должны исчезать внезапно.

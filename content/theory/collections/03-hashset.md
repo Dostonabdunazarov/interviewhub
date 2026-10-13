@@ -6,6 +6,7 @@ section: collections
 level: middle
 sortOrder: 3
 summary: Множество без значений, проверка вхождения за константу, операции над множествами и чем HashSet отличается от Distinct и от SortedSet.
+questions: csharp-kak-rabotaet-hashset, algorithms-kogda-ispolzovat-dictionary-a-kogda-hashset, algorithms-kak-naiti-dublikaty-v-massive, algorithms-kak-naiti-peresechenie-dvuh-massivov
 ---
 
 `HashSet<T>` — это `Dictionary` без значений: те же корзины, тот же хеш, только хранятся одни ключи. Нужен он для двух вещей — быстро проверять вхождение и хранить элементы без дубликатов.

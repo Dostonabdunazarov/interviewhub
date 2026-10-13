@@ -6,6 +6,7 @@ section: containers
 level: senior
 sortOrder: 4
 summary: Что происходит с подом от команды на удаление до SIGKILL, почему сеть узнаёт об этом позже приложения, как preStop и terminationGracePeriodSeconds складываются в бюджет, что защищает PodDisruptionBudget, а что нет, и как убедиться, что деплой не теряет запросы.
+questions: devops-senior-kak-nastroit-graceful-shutdown-v-kubernetes-chtoby-ne-teryat-zaprosy-p, advanced-aspnet-chto-proishodit-s-tekuschimi-zaprosami-pri-graceful-shutdown-i-kak-ne
 ---
 
 Под в Kubernetes останавливают постоянно: при каждом деплое, масштабировании вниз, обновлении узлов, вытеснении из-за нехватки ресурсов. Со стороны приложения всё начинается с `SIGTERM`, и как на него правильно реагирует Generic Host — дорабатывает запросы, останавливает фоновые сервисы, укладывается в `ShutdownTimeout`, — разобрано в статье `Graceful shutdown`. Но даже идеальный код теряет запросы, если не учитывать, что делает кластер вокруг него. Эта статья — о стороне Kubernetes: последовательность остановки, кто и когда узнаёт об удалении пода и какие настройки манифеста за это отвечают.

@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 3
 summary: Mark and sweep с уплотнением, что считается достижимым, паузы и режимы Workstation/Server, фоновая сборка и почему GC.Collect вызывать не надо.
+questions: clr-gc-kak-rabotaet-garbage-collector, clr-gc-kak-gc-opredelyaet-kakie-obekty-bolshe-ne-nuzhny, clr-gc-chto-takoe-gc-collect-i-pochemu-obychno-ne-stoit-vyzyvat-ego-vruchnuyu, clr-gc-chto-takoe-server-gc-i-workstation-gc, advanced-csharp-chem-workstation-gc-otlichaetsya-ot-server-gc-pod-realnoi-nagruzkoi-i, advanced-csharp-chto-takoe-background-gc-i-pochemu-pauza-gen-2-vse-ravno-mozhet-byt-za, clr-gc-mozhet-li-gc-udalit-obekty-kotorye-ssylayutsya-drug-na-druga, advanced-csharp-kak-vliyaet-servergarbagecollection-i-concurrentgc-na-latency-v-kontei
 ---
 
 Сборщик мусора освобождает память объектов, до которых больше нельзя добраться из работающей программы. Ключевое слово — «нельзя добраться»: GC не считает ссылки и не знает, «нужен» ли объект. Он строит граф достижимости от корней и всё, что в него не попало, считает мусором.

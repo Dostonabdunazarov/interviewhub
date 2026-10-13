@@ -6,6 +6,7 @@ section: system-design-basics
 level: middle
 sortOrder: 4
 summary: Scale up против scale out, почему API масштабируют добавлением подов, а базу — сначала железом, что нужно сделать с сервисом, чтобы он стал stateless, и где горизонтальный рост ломается.
+questions: microservices-horizontal-vs-vertical-scaling, system-design-chto-takoe-horizontal-scaling, system-design-chto-takoe-vertical-scaling, microservices-kak-masshtabirovat-mikroservis, system-design-kak-masshtabirovat-api, system-design-kak-masshtabirovat-database
 ---
 
 Когда мощности перестаёт хватать, вариантов два: взять машину побольше или поставить ещё машин. Первое называют вертикальным масштабированием (scale up), второе — горизонтальным (scale out). На собеседовании редко спрашивают определения, зато часто спрашивают, что из этого применить к конкретному компоненту и чем придётся заплатить. Правильный ответ почти всегда — «оба, но для разных слоёв».

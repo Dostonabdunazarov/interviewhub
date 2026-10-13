@@ -6,6 +6,7 @@ section: reliability
 level: senior
 sortOrder: 7
 summary: Что означают RTO и RPO и как каждое из них меняет архитектуру данных и вычислений, чем логическое повреждение отличается от отказа инфраструктуры, какие бывают стратегии восстановления от бэкапов до active-active, что делать при потере региона и как проверить план, не устроив аварию.
+questions: system-design-senior-chto-takoe-rto-i-rpo-i-kak-vybrannye-znacheniya-menyayut-arhitekturu, system-design-senior-kak-splanirovat-disaster-recovery-i-chto-dolzhno-proizoiti-pri-potere, system-design-senior-kak-proverit-chto-plan-vosstanovleniya-rabotaet-ne-ustroiv-avariyu-v-p
 ---
 
 Disaster recovery начинается не с выбора технологии, а с двух чисел, которые согласуют с бизнесом. RTO (Recovery Time Objective) — сколько времени сервис может быть недоступен после аварии, прежде чем ущерб станет неприемлемым. RPO (Recovery Point Objective) — за какой период данные могут быть потеряны, то есть насколько свежей должна быть точка восстановления. RPO определяет, как реплицируются и бэкапятся данные, RTO — насколько готова резервная инфраструктура. Каждый шаг к нулю по любому из них дорожает нелинейно.

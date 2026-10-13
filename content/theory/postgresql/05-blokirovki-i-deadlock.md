@@ -6,6 +6,7 @@ section: postgresql
 level: middle
 sortOrder: 5
 summary: Блокировки таблиц и строк в PostgreSQL, очередь блокировок, из-за которой быстрый ALTER TABLE вешает прод, FOR UPDATE и SKIP LOCKED, как возникает и обнаруживается deadlock и как найти держателя блокировки.
+questions: postgresql-kak-voznikaet-deadlock-v-postgresql, advanced-postgresql-pochemu-deadlock-voznikaet-pri-obnovlenii-v-raznom-poryadke-i-kak-etog, postgresql-kak-diagnostirovat-deadlock, advanced-postgresql-kak-diagnostirovat-blokirovki-i-naiti-zapros-derzhaschii-ih, advanced-postgresql-kogda-stoit-vybrat-select-for-update-a-kogda-optimistichnuyu-blokirovk, postgresql-chto-takoe-row-level-lock, postgresql-chto-takoe-table-level-lock, postgresql-chto-takoe-pg-locks
 ---
 
 MVCC избавляет читателей от ожидания писателей, но не отменяет блокировки совсем. Два `UPDATE` одной строки выстраиваются в очередь, `ALTER TABLE` ждёт всех, кто читает таблицу, а неудачный порядок захвата строк приводит к deadlock. В PostgreSQL два уровня тяжеловесных блокировок — на таблицу и на строку, — и устроены они по-разному.

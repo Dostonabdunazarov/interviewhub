@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 8
 summary: Делегат против дерева выражений, где именно выполняется фильтр, как случайно вытянуть таблицу целиком и что возвращать из репозитория.
+questions: csharp-chem-otlichayutsya-ienumerable-i-iqueryable, ef-core-chem-ienumerable-otlichaetsya-ot-iqueryable-v-ef-core, ef-core-chto-proishodit-pri-vyzove-asenumerable, ef-core-chto-takoe-deferred-execution-v-ef-core
 ---
 
 Оба интерфейса выглядят одинаково: `Where`, `Select`, `OrderBy` есть и там, и там. Разница в том, **что хранит цепочка**. `IEnumerable<T>` хранит скомпилированные делегаты и выполняет их в вашем процессе. `IQueryable<T>` хранит дерево выражений — описание запроса, которое провайдер умеет перевести на другой язык, обычно в SQL. Перепутать их — способ незаметно вытащить из базы всю таблицу.

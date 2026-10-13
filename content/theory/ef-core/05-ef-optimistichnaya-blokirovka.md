@@ -6,6 +6,7 @@ section: ef-core
 level: middle
 sortOrder: 5
 summary: Как concurrency token попадает в WHERE, почему в PostgreSQL для этого хватает xmin, что делать с DbUpdateConcurrencyException, как не сломать проверку в веб-API и когда атомарный UPDATE проще версии.
+questions: ef-core-kak-rabotaet-optimistic-concurrency, ef-core-chto-takoe-concurrency-token, ef-core-kak-obrabatyvat-dbupdateconcurrencyexception, advanced-postgresql-kogda-stoit-vybrat-select-for-update-a-kogda-optimistichnuyu-blokirovk
 ---
 
 Оптимистичная блокировка исходит из того, что конфликты редки. Строку не блокируют при чтении, а при сохранении проверяют, что её никто не изменил с момента загрузки. В EF Core это делается одним механизмом — **concurrency token**: исходное значение специального свойства добавляется в `WHERE` у `UPDATE` и `DELETE`. Если команда не нашла строку, значит её поменяли или удалили, и EF бросает `DbUpdateConcurrencyException`. Вся сложность — не в настройке, а в том, что делать дальше, и в том, как не потерять исходное значение по дороге через API.

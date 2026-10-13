@@ -6,6 +6,7 @@ section: messaging
 level: senior
 sortOrder: 4
 summary: At-most-once, at-least-once и exactly-once в Kafka как сумма настроек producer'а, топика и места коммита на consumer'е — acks, ISR и min.insync.replicas, idempotent producer, delivery report, и почему на практике выбирают at-least-once с идемпотентной обработкой.
+questions: kafka-advanced-kakie-garantii-dostavki-daet-kafka-i-kak-nastroiki-acks-i-retries-na-n, kafka-chto-takoe-producer-acknowledgement-acks, kafka-advanced-kak-rabotaet-min-insync-replicas-i-chto-proizoidet-pri-potere-replik, kafka-chto-takoe-idempotent-producer, kafka-kak-garantirovat-otsutstvie-poteri-soobschenii, kafka-chto-takoe-at-least-once-delivery, kafka-pochemu-v-realnyh-sistemah-chasto-ispolzuyut-at-least-once, kafka-advanced-chto-proizoidet-pri-acks-1-i-padenii-lidera-particii
 ---
 
 Вопрос «какие гарантии доставки даёт Kafka» — ловушка, если отвечать одним словом. Kafka умеет все три семантики, и какая получится, решает комбинация настроек на трёх участках: producer (`acks`, ретраи, идемпотентность), брокер и топик (replication factor, `min.insync.replicas`) и consumer (когда коммитится offset). Итоговая гарантия равна самому слабому звену: надёжный producer бесполезен, если consumer коммитит offset до обработки.

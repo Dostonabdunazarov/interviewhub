@@ -6,6 +6,7 @@ section: oop-solid
 level: senior
 sortOrder: 4
 summary: Когда принципы SOLID окупаются, а когда превращаются в церемонию — интерфейс на каждый класс, пять файлов вместо трёх строк и тесты, проверяющие моки.
+questions: architecture-patterns-gde-solid-pomogaet-a-gde-sledovanie-emu-uslozhnyaet-kod-bez-polzy, architecture-patterns-kak-primenit-dependency-inversion-ne-sozdavaya-interfeis-na-kazhdyi-kl
 ---
 
 Вопрос «где SOLID вредит» задают senior-кандидатам почти всегда, и ответ «нигде, это лучшие практики» — плохой. SOLID помогает там, где есть реальная изменчивость: несколько реализаций, разные причины изменений, граница с инфраструктурой. Применённый превентивно — к коду, который не меняется и у которого одна реализация, — он даёт не гибкость, а косвенность: чтобы понять три строки логики, читатель прыгает по пяти файлам.

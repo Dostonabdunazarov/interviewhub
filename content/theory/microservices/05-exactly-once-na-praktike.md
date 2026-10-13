@@ -6,6 +6,7 @@ section: microservices
 level: senior
 sortOrder: 5
 summary: Почему exactly-once доставку по сети гарантировать нельзя, а exactly-once эффект — можно, из чего он собирается (at-least-once плюс идемпотентность, inbox, offset в базе), что на самом деле обещают транзакции Kafka, сколько они стоят и почему не дружат с записью в базу.
+questions: distributed-systems-kak-realizovat-exactly-once-na-praktike-esli-set-nenadezhna, kafka-advanced-kak-rabotaet-exactly-once-v-kafka-i-kakova-ego-realnaya-cena, kafka-chto-takoe-exactly-once, kafka-advanced-kak-tranzakcii-kafka-vzaimodeistvuyut-s-zapisyu-v-bazu-dannyh, microservices-advanced-zachem-nuzhen-inbox-i-kak-on-zaschischaet-ot-povtornoi-obrabotki, microservices-chto-takoe-inbox-pattern, kafka-chto-takoe-transactions-v-kafka, kafka-auto-commit-vs-manual-commit
 ---
 
 «У нас в Kafka включён exactly-once» — одна из самых частых неточностей на собеседованиях. Отправитель в ненадёжной сети не может отличить потерю сообщения от потери подтверждения, поэтому выбирает между «не повторять» и «повторять». Ровно одной доставки протокол не даёт. Зато можно добиться, чтобы **эффект** был ровно один: сообщение придёт дважды, а результат в базе — один. Этот раздел про то, как это собирается на практике и где кончаются гарантии брокера.

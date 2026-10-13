@@ -6,6 +6,7 @@ section: microservices
 level: middle
 sortOrder: 1
 summary: Как проводить границы микросервисов по bounded context и агрегатам, почему у каждой сущности один владелец, по каким измеримым признакам видна ошибочная граница и почему начинать стоит с крупных сервисов.
+questions: microservices-kak-opredelit-granicy-mikroservisov, microservices-advanced-kak-opredelit-granicy-servisov-cherez-ddd-i-kakie-priznaki-govoryat-ob, microservices-advanced-chto-takoe-bounded-context-i-pochemu-odna-suschnost-mozhet-po-raznomu, microservices-chto-takoe-bounded-context, microservices-kogda-mikroservisy-ne-nuzhny
 ---
 
 Почти все боли микросервисной архитектуры — распределённые транзакции, цепочки синхронных вызовов, согласованные релизы пяти сервисов — следствие одной ошибки: неправильно проведённой границы. Сервисы, которые постоянно меняются вместе и не могут ответить на запрос без соседа, — это монолит, разрезанный сетью. На собеседовании вопрос «как вы делили систему на сервисы» проверяет, умеет ли кандидат объяснить, по какому принципу проходит граница и как понять, что она проведена неверно.

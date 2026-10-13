@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 5
 summary: Три независимых механизма равенства, контракт GetHashCode, почему структуре без override дорого лежать в Dictionary и чем record отличается от остальных.
+questions: csharp-chem-otlichayutsya-equals-referenceequals-i, csharp-dlya-chego-nuzhen-gethashcode, csharp-chto-budet-pri-sravnenii-dvuh-struct, csharp-pochemu-nelzya-izmenyat-obekt-poka-on-ispolzuetsya-kak-klyuch-dictiona
 ---
 
 В C# есть три разных способа спросить «равны ли эти два объекта», и они не связаны между собой: виртуальный `Equals`, `GetHashCode` и оператор `==`. Можно переопределить один и забыть про второй — компилятор не остановит, а коллекции начнут вести себя странно. Разбираемся, кто из них когда вызывается и какой контракт между ними обязателен.

@@ -6,6 +6,7 @@ section: performance
 level: senior
 sortOrder: 1
 summary: Почему Stopwatch в цикле врёт, что BenchmarkDotNet делает за вас, какие ошибки обесценивают бенчмарк и почему выигрыш в бенчмарке не обязан повториться в проде.
+questions: performance-profiling-kak-postroit-korrektnyi-benchmark-na-benchmarkdotnet-i-kakie-oshibki-e, performance-profiling-pochemu-rezultat-mikrobenchmarka-chasto-ne-vosproizvoditsya-v-prode
 ---
 
 Любая оптимизация начинается с числа «было» и заканчивается числом «стало». Если первое число получено неправильно, второе ничего не доказывает. Микробенчмарк — самый дешёвый способ получить такое число для метода и самый лёгкий способ обмануть себя: JIT, кэши процессора и сборщик мусора охотно подменяют измеряемое чем-то другим. Все числа ниже сняты на .NET 10.0.10, BenchmarkDotNet 0.15.8, AMD Ryzen 7 5800H, Windows 11.

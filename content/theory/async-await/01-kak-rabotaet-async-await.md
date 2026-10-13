@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 1
 summary: Асинхронность без лишнего потока, что на самом деле делает await, почему async не значит «параллельно» и сколько это стоит.
+questions: async-kak-rabotaet-async-await, dotnet-async-await-internals, async-sozdaet-li-async-await-novyi-potok, async-chto-proishodit-posle-await, async-chto-takoe-cpu-bound-i-io-bound-operacii, async-kakie-oshibki-chasche-vsego-dopuskayut-pri-ispolzovanii-async-await
 ---
 
 `async/await` — не про то, чтобы выполнять код в другом потоке. Это про то, чтобы **не занимать поток, пока идёт ожидание**. Разница принципиальная, и большая часть ошибок с асинхронностью растёт из первого понимания вместо второго.

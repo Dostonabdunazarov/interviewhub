@@ -6,6 +6,7 @@ section: postgresql
 level: senior
 sortOrder: 6
 summary: Декларативное партиционирование в PostgreSQL — RANGE, LIST и HASH, partition pruning на этапе планирования и выполнения, ограничения на ключи, выбор ключа и перевод живой таблицы на секции без простоя.
+questions: postgresql-chto-takoe-partitioning, postgresql-kogda-ispolzovat-partitioning, advanced-postgresql-kak-vybrat-klyuch-particionirovaniya-i-chto-proizoidet-pri-neudachnom, advanced-postgresql-kak-perevesti-bolshuyu-rabotayuschuyu-tablicu-na-particionirovanie-bez, system-design-chto-takoe-partitioning
 ---
 
 Партиционирование разбивает одну большую логическую таблицу на несколько физических таблиц-секций по значению ключа. Приложение работает с родительской таблицей как с обычной, PostgreSQL сам направляет строки в нужную секцию, а при чтении отсекает лишние. Главный выигрыш обычно не в скорости запросов, как принято думать, а в обслуживании: удаление старых данных, vacuum и индексы работают по частям.

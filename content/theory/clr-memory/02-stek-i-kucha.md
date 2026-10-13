@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 2
 summary: Как устроены два вида памяти, сколько на самом деле весит объект в куче, что такое заголовок объекта и почему «структуры всегда на стеке» — неправда.
+questions: csharp-gde-hranyatsya-value-types-i-reference-types-v-stack-ili-heap, clr-gc-chto-takoe-allocation, advanced-csharp-chto-takoe-stackalloc-i-kak-ne-poluchit-perepolnenie-steka-pri-ego-isp, algorithms-kakie-problemy-mogut-vozniknut-pri-glubokoi-rekursii
 ---
 
 В .NET память делится на стек и управляемую кучу. Распространённая формулировка «значимые типы живут на стеке, ссылочные — в куче» удобна как первое приближение, но неверна: структура внутри класса лежит в куче, а ссылка на объект — на стеке. Правильный критерий — не тип, а **время жизни**.

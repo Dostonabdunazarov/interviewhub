@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 8
 summary: Три способа остановить прогресс без единого исключения — взаимная блокировка, «вежливое» топтание на месте и голодание; условия Коффмана, единый порядок захвата, почему таймаут не лечит deadlock, и как отличить одно от другого по дампу и метрикам.
+questions: multithreading-chto-takoe-deadlock, multithreading-kak-voznikaet-deadlock, multithreading-kak-izbezhat-deadlock, multithreading-chto-takoe-livelock, multithreading-chto-takoe-starvation, multithreading-kak-diagnostirovat-problemy-mnogopotochnosti
 ---
 
 Гонка портит данные. Второй класс отказов — потеря прогресса: исключений нет, а работа не делается. Различают три вида: **deadlock** — потоки ждут друг друга вечно, **livelock** — потоки активно работают, но откатывают друг друга, **starvation** — система работает, но отдельный поток или задача не получает ресурс. Их путают, а лечатся они по-разному.

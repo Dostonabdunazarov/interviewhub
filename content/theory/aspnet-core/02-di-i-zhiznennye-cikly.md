@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 2
 summary: Как устроен встроенный DI-контейнер, чем отличаются Transient, Scoped и Singleton, что такое captive dependency и почему в Production контейнер о ней молчит.
+questions: aspnet-core-chem-otlichayutsya-transient-scoped-i-singleton, aspnet-core-pochemu-nelzya-napryamuyu-vnedryat-scoped-servis-v-singleton, advanced-aspnet-pochemu-zahvat-scoped-servisa-v-singleton-privodit-k-utechke-i-kak-eto, aspnet-core-kak-rabotaet-vstroennyi-di-konteiner-asp-net-core, advanced-aspnet-kak-ustroen-di-konteiner-asp-net-core-i-kogda-ego-stoit-zamenit-storon, aspnet-core-chto-takoe-service-lifetime, aspnet-core-chto-takoe-dependency-injection, aspnet-core-chto-takoe-iserviceprovider
 ---
 
 В ASP.NET Core почти ничего не создаётся через `new`: контроллеры, middleware, фильтры, hosted services, options и логгеры получаются из DI-контейнера. Поэтому вопрос «какой lifetime у сервиса» — не формальность. Неверно выбранное время жизни даёт гонки, утечки памяти и данные одного пользователя в ответе другому, причём проявляется это только под нагрузкой.

@@ -6,6 +6,7 @@ section: collections
 level: middle
 sortOrder: 2
 summary: Корзины, цепочки и коллизии, во что обходится плохой GetHashCode, почему порядок перечисления нельзя считать стабильным и зачем задавать компаратор.
+questions: csharp-kak-rabotaet-dictionary, algorithms-slozhnost-poiska-v-dictionary, algorithms-chto-takoe-hash-table, csharp-pochemu-nelzya-izmenyat-obekt-poka-on-ispolzuetsya-kak-klyuch-dictiona, csharp-dlya-chego-nuzhen-gethashcode
 ---
 
 `Dictionary<TKey, TValue>` даёт поиск по ключу за O(1) — при условии, что ключи правильно считают хеш. Внутри это массив корзин, и всё поведение словаря, включая неприятное, объясняется этим устройством.

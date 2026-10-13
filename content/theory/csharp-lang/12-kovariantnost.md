@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 12
 summary: Почему IEnumerable<string> можно присвоить IEnumerable<object>, а List<string> нельзя, что такое out и in у параметров типа и чем опасна ковариантность массивов.
+questions: csharp-chto-takoe-covariance-i-contravariance
 ---
 
 Вопрос звучит так: если `string` — это `object`, то является ли `List<string>` списком `object`? Ответ — нет, и причина показательна. Вариантность определяет, когда обобщённый тип с одним параметром можно использовать вместо такого же с другим параметром, и ключ к ней — направление, в котором данные ходят.

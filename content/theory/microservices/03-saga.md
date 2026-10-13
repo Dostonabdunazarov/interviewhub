@@ -6,6 +6,7 @@ section: microservices
 level: senior
 sortOrder: 3
 summary: Как сага заменяет распределённую транзакцию цепочкой локальных транзакций с компенсациями, чем хореография отличается от оркестрации в эксплуатации, как устроена state machine в MassTransit, что такое pivot-шаг и как жить без изоляции.
+questions: microservices-advanced-kak-realizovat-saga-i-v-chem-prakticheskaya-raznica-mezhdu-horeografie, microservices-chto-takoe-saga-pattern, microservices-choreography-vs-orchestration, microservices-advanced-kak-proektirovat-kompensiruyuschie-tranzakcii-esli-otkat-fizicheski-ne, microservices-kak-obespechit-konsistentnost-mezhdu-servisami
 ---
 
 Оформление заказа затрагивает склад, платежи и доставку — три сервиса с тремя базами. Общей транзакции между ними нет, и делать её через two-phase commit не стоит (почему — в статье `Почему 2PC проблематичен`). Сага — это бизнес-процесс, разбитый на цепочку локальных транзакций: каждый шаг атомарно меняет данные своего сервиса и сообщает о результате, а при неудаче уже сделанные шаги отменяются компенсирующими действиями. Атомарность «всё или ничего» заменяется на «всё или аккуратно отменено», а изоляция пропадает совсем — и именно это интервьюер хочет услышать.

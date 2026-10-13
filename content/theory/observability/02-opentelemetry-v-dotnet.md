@@ -6,6 +6,7 @@ section: observability
 level: senior
 sortOrder: 2
 summary: Как OpenTelemetry ложится на встроенные Activity, Meter и ILogger, как выглядит минимальная настройка с UseOtlpExporter, что инструментировать первым, как писать свои span'ы и метрики, передавать контекст через очередь и зачем между приложением и бэкендом стоит Collector.
+questions: devops-senior-kak-nastroit-opentelemetry-v-net-i-chto-instrumentirovat-v-pervuyu-och, microservices-advanced-kak-organizovat-raspredelennuyu-trassirovku-i-chto-delat-esli-kontekst, microservices-chto-takoe-distributed-tracing
 ---
 
 OpenTelemetry — открытый стандарт телеметрии: API для кода, SDK, который собирает и экспортирует данные, протокол OTLP и семантические соглашения об именах атрибутов и метрик. Он отвязывает инструментирование от бэкенда: данные уходят в Prometheus, Tempo, Loki или коммерческий APM без изменения приложения. В .NET у OpenTelemetry особое положение — API для трассировок и метрик встроен в саму платформу, и SDK лишь подписывается на то, что уже публикуют рантайм, ASP.NET Core и `HttpClient`.

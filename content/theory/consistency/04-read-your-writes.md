@@ -6,6 +6,7 @@ section: consistency
 level: middle
 sortOrder: 4
 summary: Почему пользователь не видит только что сохранённое при чтении с реплик, пять способов обеспечить read-your-writes — от чтения с primary до токена позиции WAL, — и где гарантию ломают кэш, фоновые обработчики и второе устройство.
+questions: distributed-systems-chto-takoe-read-your-writes-consistency-i-kak-obespechit-ee-pri-chteni, advanced-postgresql-chto-takoe-replication-lag-kak-ego-izmeryat-i-kakie-posledstviya-u-cht, microservices-advanced-kak-borotsya-s-zaderzhkoi-sinhronizacii-read-modeli-v-cqrs
 ---
 
 Пользователь меняет имя в профиле, жмёт «Сохранить», страница перезагружается — и показывает старое имя. Через секунду, после ещё одного обновления, всё в порядке. Это нарушение read-your-writes: самая заметная пользователю аномалия асинхронной репликации и самая частая причина тикетов «данные не сохраняются». Гарантия скромная — клиент после успешной записи видит её в своих последующих чтениях, — но обеспечить её в системе с репликами чтения сложнее, чем кажется. Это одна из сессионных гарантий из статьи `Модели согласованности`.

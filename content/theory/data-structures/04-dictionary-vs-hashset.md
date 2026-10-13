@@ -6,6 +6,7 @@ section: data-structures
 level: middle
 sortOrder: 4
 summary: Когда задаче нужно множество, а когда словарь, типовые шаблоны — увиденное, частоты, индекс, группировка — с замерами разных способов подсчёта и ошибками, которые возвращают O(n).
+questions: algorithms-kogda-ispolzovat-dictionary-a-kogda-hashset, algorithms-kak-naiti-dublikaty-v-massive, csharp-kak-rabotaet-hashset, csharp-kak-rabotaet-dictionary, algorithms-slozhnost-poiska-v-dictionary
 ---
 
 `Dictionary` и `HashSet` — одна и та же хеш-таблица, только в словаре к ключу приложено значение. Сложность операций у них одинаковая, и выбор между ними — не вопрос скорости, а вопрос того, что задаче нужно знать о ключе. На алгоритмической секции это решение принимается в первые минуты почти каждой задачи, поэтому полезно иметь в голове готовые шаблоны. Устройство обеих коллекций разобрано в статьях `Как устроен Dictionary` и `HashSet<T>`; здесь — как ими решать задачи. Замеры сделаны на .NET 10.0.10.

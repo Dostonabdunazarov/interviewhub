@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 9
 summary: Окно в чужую память без копирования, почему Span — ref struct и не работает с async, чем от него отличается Memory и как переписать разбор строк без аллокаций.
+questions: csharp-chto-takoe-span-t-i-memory-t, advanced-csharp-pochemu-span-t-nelzya-sohranit-v-pole-klassa-i-kak-oboiti-eto-ogranich, advanced-csharp-kogda-memory-t-opravdan-vmesto-span-t-i-kakova-cena-etogo-perehoda, advanced-csharp-chto-takoe-stackalloc-i-kak-ne-poluchit-perepolnenie-steka-pri-ego-isp
 ---
 
 `Span<T>` — представление участка непрерывной памяти: массива, строки, стекового буфера или неуправляемого блока. Он не владеет данными и ничего не копирует — только смотрит. Появившись в .NET Core 2.1, он изменил то, как в платформе пишут разбор данных: вместо создания подстрок и подмассивов стало принято передавать окна в уже существующую память.

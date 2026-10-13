@@ -6,6 +6,7 @@ section: collections
 level: middle
 sortOrder: 1
 summary: Фиксированный массив и растущий список, стратегия удвоения и её цена, зачем задавать capacity и когда массив всё ещё лучше.
+questions: csharp-chem-array-otlichaetsya-ot-list-t, algorithms-slozhnost-dobavleniya-elementa-v-list, algorithms-slozhnost-poiska-v-list
 ---
 
 `List<T>` внутри — обычный массив. Вся разница между ними в том, что список умеет расти, и за это умение приходится платить копированием. Понимание механики роста объясняет и совет задавать `capacity`, и то, почему вставка в начало дорогая, и когда стоит взять голый массив.

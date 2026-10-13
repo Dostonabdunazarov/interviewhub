@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 10
 summary: Асинхронная очередь producer-consumer внутри процесса — bounded и unbounded каналы, режимы переполнения, завершение и ошибки, backpressure, воркеры и конвейеры, фоновая обработка в BackgroundService и чем канал не является.
+questions: multithreading-chto-takoe-channel-t, multithreading-kogda-ispolzovat-channel-t, advanced-concurrency-kak-ustroen-channel-t-i-kogda-bounded-kanal-predpochtitelnee-unbounded, advanced-concurrency-kak-realizovat-backpressure-chtoby-ochered-ne-sela-vsyu-pamyat-pri-vsp
 ---
 
 Задача «одни кладут работу, другие забирают» встречается постоянно: фоновая обработка после ответа на запрос, конвейер, батчевая запись в базу. Нужна очередь, которая потокобезопасна, умеет **ждать** — читатель ждёт данных, писатель ждёт места, — и не занимает потоки на время ожидания. `ConcurrentQueue<T>` ждать не умеет, `BlockingCollection<T>` ждёт, блокируя поток. `Channel<T>` из `System.Threading.Channels` — асинхронная версия того же, встроенная в .NET начиная с Core 3.0.

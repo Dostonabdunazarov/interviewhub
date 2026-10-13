@@ -6,6 +6,7 @@ section: consistency
 level: senior
 sortOrder: 10
 summary: Блокировка ради эффективности и ради корректности, почему SET NX PX в Redis не даёт взаимного исключения при паузах и failover, как устроен Redlock и в чём спор Клеппмана и antirez, fencing-токены и способы обойтись без блокировки за счёт модели данных.
+questions: distributed-systems-pochemu-raspredelennaya-blokirovka-na-redis-nebezopasna-i-chto-predlag, microservices-redis-kak-distributed-lock-kakie-problemy, distributed-systems-kak-oboitis-bez-raspredelennoi-blokirovki-izmeniv-model-dannyh, microservices-kogda-nuzhen-distributed-lock, microservices-chto-takoe-distributed-lock
 ---
 
 Внутри процесса взаимное исключение даёт `lock`, и он надёжен: поток, держащий монитор, не может «забыть», что держит его, — см. `lock и Monitor`. Между процессами на разных машинах такой гарантии нет. Распределённая блокировка — это почти всегда **lease**: право, выданное на время, которое истекает без ведома владельца, если тот замер или отрезан. Отсюда главный вопрос, который нужно задать до выбора инструмента: блокировка нужна для **эффективности** или для **корректности**?

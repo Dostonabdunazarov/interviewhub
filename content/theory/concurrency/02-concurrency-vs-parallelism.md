@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 2
 summary: Конкурентность и параллелизм — разные вещи с разными инструментами; почему async не ускоряет вычисления, Parallel.For не ускоряет I/O, и где предел ускорения.
+questions: multithreading-chto-takoe-concurrency-i-parallelism, multithreading-chem-parallel-foreach-otlichaetsya-ot-obychnogo-foreach, async-chto-takoe-cpu-bound-i-io-bound-operacii, multithreading-chem-parallel-foreachasync-otlichaetsya-ot-task-whenall
 ---
 
 Слова «конкурентно», «параллельно» и «асинхронно» в разговоре часто означают одно и то же — «одновременно». На собеседовании их различают, и не из педантизма: от того, какая это задача, зависит инструмент, а неверный инструмент либо ничего не ускоряет, либо кладёт сервис.

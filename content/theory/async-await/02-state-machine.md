@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 2
 summary: Во что компилятор превращает async-метод, зачем нужны builder и awaiter, почему структура переезжает в кучу и как это объясняет стектрейсы.
+questions: async-chto-takoe-state-machine-dlya-async-metoda, dotnet-async-await-internals, async-chto-proishodit-posle-await
 ---
 
 `async` — синтаксический сахар. Компилятор переписывает метод в **машину состояний**: структуру с полем текущего шага и методом `MoveNext`, где тело разрезано по точкам `await`. Знать её устройство полезно не ради эрудиции: из него напрямую следуют и цена асинхронности, и вид стектрейсов, и правила про `ValueTask`.

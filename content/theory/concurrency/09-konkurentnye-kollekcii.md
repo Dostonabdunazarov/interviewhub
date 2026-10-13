@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 9
 summary: Что происходит с Dictionary при параллельной записи, как устроен ConcurrentDictionary и во что он обходится, почему GetOrAdd вызывает фабрику несколько раз, чем ConcurrentQueue отличается от ConcurrentBag, и когда лучше неизменяемый снимок.
+questions: multithreading-chem-concurrentdictionary-otlichaetsya-ot-obychnogo-dictionary, multithreading-chto-takoe-concurrentdictionary, multithreading-kakie-suschestvuyut-thread-safe-kollekcii, advanced-concurrency-kak-getoradd-v-concurrentdictionary-mozhet-vyzvat-fabriku-dvazhdy-i-ch, advanced-concurrency-chto-delat-esli-concurrentdictionary-stal-uzkim-mestom-pod-nagruzkoi
 ---
 
 Обычные коллекции BCL безопасны для одновременного чтения, но не для записи. Пространство имён `System.Collections.Concurrent` даёт коллекции, которые можно одновременно читать и менять из многих потоков без внешнего `lock`. Важно понимать, что именно они гарантируют: каждая операция атомарна, но комбинация операций — нет, а за потокобезопасность платят памятью и однопоточной скоростью.

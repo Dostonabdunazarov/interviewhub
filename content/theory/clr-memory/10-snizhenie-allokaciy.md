@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 10
 summary: Когда аллокации вообще стоит трогать, измеримые приёмы от пулов до structs, скрытые источники мусора и как не сломать читаемость ради процента.
+questions: clr-gc-kak-umenshit-kolichestvo-allokacii, advanced-csharp-kak-naiti-i-ubrat-allokacii-v-goryachem-puti-esli-profilirovschik-poka, performance-profiling-kak-profilirovat-allokacii-i-opredelit-kakie-iz-nih-deistvitelno-vazhn, advanced-csharp-chto-takoe-gc-pressure-i-po-kakim-metrikam-vy-poimete-chto-on-stal-uzk, advanced-csharp-kak-ustroen-arraypool-t-i-kakie-oshibki-pri-ego-ispolzovanii-privodyat, clr-gc-chto-takoe-allocation
 ---
 
 Эта статья собирает воедино то, что разбиралось в разделе по частям: аллокация сама по себе дёшева, дорога **последующая сборка**. Снижение аллокаций — это не микрооптимизация ради красивых чисел, а способ сократить частоту сборок и их влияние на задержки. Но берутся за него только тогда, когда есть подтверждение, что проблема именно здесь.

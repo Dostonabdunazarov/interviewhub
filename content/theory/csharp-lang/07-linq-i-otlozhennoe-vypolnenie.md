@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 7
 summary: Почему запрос не выполняется в момент объявления, какие операторы его запускают, двойное перечисление и чего стоит LINQ по памяти.
+questions: csharp-chto-takoe-linq-i-kak-on-vypolnyaetsya, csharp-chto-takoe-deferred-execution, ef-core-kogda-realno-vypolnyaetsya-linq-zapros, ef-core-chto-proishodit-pri-vyzove-tolist, csharp-chem-otlichayutsya-first-firstordefault-single-i-singleordefault
 ---
 
 Главное, что нужно знать про LINQ, — вызов `Where` ничего не фильтрует. Он строит объект, который **умеет** фильтровать, и ждёт, пока его начнут перечислять. Это называется отложенным (ленивым) выполнением, и почти все неожиданности с LINQ объясняются именно им.

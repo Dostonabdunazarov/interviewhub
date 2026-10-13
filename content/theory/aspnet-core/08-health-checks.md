@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 8
 summary: Как устроены встроенные health checks и какие коды они отдают, чем liveness отличается от readiness, почему проверка базы в liveness приводит к каскадному отказу и почему зелёная проба ещё не значит, что сервис работает.
+questions: aspnet-core-chto-takoe-health-checks, advanced-aspnet-pochemu-health-check-mozhet-otvechat-ok-kogda-prilozhenie-fakticheski, microservices-chto-takoe-health-check, distributed-systems-chto-takoe-gray-failure-i-pochemu-health-check-ego-ne-zamechaet
 ---
 
 Health check — HTTP-endpoint, по которому оркестратор или балансировщик решает судьбу экземпляра приложения: слать ли на него трафик, перезапускать ли его. Написать такую проверку легко, а вот написать проверку, которая отвечает на правильный вопрос, — уже нет. Неудачная проба либо пропускает неработающий сервис, либо сама роняет здоровый.

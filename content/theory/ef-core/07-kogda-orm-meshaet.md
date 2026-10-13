@@ -6,6 +6,7 @@ section: ef-core
 level: senior
 sortOrder: 7
 summary: Сколько на самом деле стоит EF поверх ADO.NET, какие запросы LINQ не выражает, как безопасно писать raw SQL, когда брать Dapper и COPY, и почему generic-репозиторий поверх DbContext чаще вредит.
+questions: ef-core-kogda-ispolzovat-dapper-vmesto-ef-core, ef-core-plyusy-i-minusy-dapper, ef-core-chto-takoe-raw-sql-v-ef-core, ef-core-kak-izbezhat-sql-injection-pri-ispolzovanii-dapper, ef-core-nuzhen-li-repository-pattern-poverh-ef-core, architecture-patterns-kogda-pattern-repository-poverh-orm-izbytochen, ef-core-plyusy-i-minusy-ef-core, ef-core-kak-optimizirovat-medlennyi-ef-core-zapros
 ---
 
 Предыдущие статьи раздела описывали EF Core изнутри: трекер, загрузку связей, трансляцию, транзакции. Эта — о границах. ORM хорош для того, для чего создан: загрузить агрегат, поменять, сохранить одной транзакцией, не написав ни строки SQL. Но есть задачи, где абстракция стоит дороже, чем даёт, — тяжёлое чтение, сложный SQL, массовые операции, горячий путь с жёсткой latency. Зрелый ответ на собеседовании — не «EF медленный» и не «Dapper не нужен», а понимание, где проходит граница и что есть между ними.

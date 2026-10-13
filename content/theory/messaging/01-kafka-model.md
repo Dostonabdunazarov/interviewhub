@@ -6,6 +6,7 @@ section: messaging
 level: middle
 sortOrder: 1
 summary: Kafka как распределённый журнал, а не очередь — топики, партиции, offset'ы, брокеры и реплики, KRaft вместо ZooKeeper, путь сообщения от producer'а до consumer'а и чем эта модель отличается от RabbitMQ.
+questions: kafka-chto-takoe-apache-kafka, kafka-kafka-vs-rabbitmq, kafka-kogda-vybrat-kafka-a-kogda-rabbitmq, kafka-chto-takoe-topic, kafka-chto-takoe-partition, kafka-chto-takoe-offset, kafka-chto-takoe-leader-i-follower-partition-replicas, kafka-chto-takoe-replication-factor
 ---
 
 На собеседовании Kafka часто называют «очередью», и это первая неточность, которую стоит исправить. Kafka — распределённый журнал событий: брокеры хранят записи в упорядоченных append-only логах на диске, а клиенты пишут в конец лога и читают с любой позиции. Прочитанное сообщение никуда не исчезает, его могут независимо прочитать ещё десять сервисов, а через неделю — перечитать заново. Почти все свойства Kafka, о которых спрашивают дальше, — порядок, масштабирование, гарантии, retention, — следуют из этой модели.

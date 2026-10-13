@@ -6,6 +6,7 @@ section: messaging
 level: middle
 sortOrder: 2
 summary: Как producer выбирает партицию, почему порядок в Kafka есть только внутри партиции, какие три условия его сохраняют, где он теряется незаметно, как бороться с горячими ключами и почему число партиций трудно поменять.
+questions: kafka-kak-kafka-obespechivaet-poryadok-soobschenii, kafka-garantiruetsya-li-poryadok-soobschenii-vo-vsem-topic, kafka-kak-obespechit-poryadok-obrabotki-sobytii, kafka-advanced-kak-vybrat-strategiyu-particionirovaniya-i-chto-proizoidet-pri-perekos, kafka-advanced-kak-sohranit-poryadok-soobschenii-pri-parallelnoi-obrabotke-vnutri-odn, kafka-advanced-kak-bezopasno-uvelichit-chislo-particii-v-rabotayuschem-topike, kafka-kak-izmenit-kolichestvo-partitions, distributed-systems-kak-obespechit-poryadok-obrabotki-sobytii-dlya-odnoi-suschnosti-pri-pa
 ---
 
 Kafka гарантирует порядок только внутри одной партиции. Это короткое правило порождает половину вопросов на собеседовании: как сделать, чтобы события одного заказа шли по порядку, что будет при добавлении партиций, почему lag растёт только на одной из них и можно ли обрабатывать партицию в несколько потоков. Ответы на все эти вопросы начинаются с того, как запись попадает в партицию.

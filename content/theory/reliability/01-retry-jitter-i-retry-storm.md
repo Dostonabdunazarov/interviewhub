@@ -6,6 +6,7 @@ section: reliability
 level: middle
 sortOrder: 1
 summary: Что можно повторять, а что нельзя, зачем к экспоненциальной паузе добавляют случайность, как ретраи на каждом уровне превращают короткий сбой в затяжной и как это остановить retry budget, load shedding и одним уровнем повторов.
+questions: distributed-systems-kak-retry-bez-jitter-sozdaet-lavinu-zaprosov-i-kak-proektirovat-povtor, distributed-systems-chto-takoe-retry-storm-i-kak-ego-predotvratit-so-storony-servisa-i-kli, system-design-kak-realizovat-retry-bez-sozdaniya-laviny-zaprosov, microservices-pochemu-retry-mozhet-byt-opasen, microservices-chto-takoe-retry
 ---
 
 Повтор запроса — самый дешёвый способ пережить короткий сбой: моргнула сеть, перезапустился под, балансировщик отдал один `503`. Через секунду тот же запрос проходит, и пользователь ничего не замечает. Но тот же механизм при неудачной настройке становится главным источником нагрузки на систему, которая и так еле держится. Поэтому на собеседовании спрашивают не «как сделать ретрай», а «когда он помогает, когда вредит и как не дать ему уронить сервис».

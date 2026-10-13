@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 6
 summary: Воспроизведённый дедлок с замером, почему в ASP.NET Core он не срабатывает, но блокировать всё равно нельзя, и что делать, если await поставить некуда.
+questions: async-chto-takoe-deadlock-pri-ispolzovanii-async-await, advanced-concurrency-pochemu-sinhronnoe-ozhidanie-async-metoda-privodit-k-deadlock-i-pochem, async-chto-delaet-configureawait-false
 ---
 
 Классическая ошибка: асинхронный метод вызывают синхронно через `.Result` или `.Wait()`, и приложение зависает намертво. Механизм у этого зависания простой и полностью объясняется через `SynchronizationContext`. Проверим его экспериментом, а не пересказом.

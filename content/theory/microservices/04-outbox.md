@@ -6,6 +6,7 @@ section: microservices
 level: senior
 sortOrder: 4
 summary: Почему «сохранить в базу и опубликовать в брокер» теряет события, как transactional outbox сводит задачу к одной локальной транзакции, чем polling publisher отличается от CDC, что происходит с порядком и ростом таблицы и как это включается в MassTransit.
+questions: microservices-advanced-kak-rabotaet-outbox-i-pochemu-bez-nego-vozmozhna-poterya-sobytiya, microservices-chto-takoe-outbox-pattern, kafka-advanced-pochemu-dlya-konsistentnosti-s-bd-vybirayut-outbox-a-ne-tranzakcii-kaf
 ---
 
 Сервис должен сделать две вещи: изменить свою базу и сообщить об этом остальным через брокер. Общей транзакции у базы и брокера нет, и любой порядок двух вызовов оставляет окно, в котором падение процесса разводит их навсегда. Эта проблема называется dual write, и transactional outbox — стандартный ответ на неё. На собеседовании ждут не название паттерна, а объяснение, где именно теряется событие, почему ретрай не помогает и почему после outbox доставка всё равно at-least-once.

@@ -6,6 +6,7 @@ section: patterns
 level: middle
 sortOrder: 2
 summary: Когда switch по закрытому набору вариантов честнее Strategy, когда без Strategy не обойтись, что лежит посередине и как выбор связан с expression problem.
+questions: architecture-patterns-kogda-strategy-luchshe-konstrukcii-switch-i-kogda-naoborot
 ---
 
 Strategy — паттерн, в котором семейство взаимозаменяемых алгоритмов вынесено за общий интерфейс, а клиент выбирает или получает нужный. В учебниках он подаётся как способ «избавиться от switch», и на собеседовании это ловушка: кандидат, который заменил бы любой `switch` на иерархию классов, выдаёт отсутствие опыта. Правильный ответ — это компромисс, и у `switch` в нём есть своя сторона.

@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 5
 summary: Граница в 85 000 байт, почему большая куча не уплотняется, как возникает OutOfMemory при свободной памяти и что с этим делают на практике.
+questions: clr-gc-chto-takoe-large-object-heap-loh, advanced-csharp-pochemu-loh-fragmentiruetsya-i-kak-s-etim-borotsya-bez-ruchnogo-gc-col, clr-gc-chto-takoe-fragmentation-v-pamyati, advanced-csharp-kak-ustroen-arraypool-t-i-kakie-oshibki-pri-ego-ispolzovanii-privodyat
 ---
 
 Объекты от 85 000 байт живут отдельно — на большой куче объектов (Large Object Heap, LOH). У неё другие правила: она не уплотняется и собирается только при полной сборке. Из этих двух особенностей вырастает специфический класс проблем, вплоть до `OutOfMemoryException` при гигабайтах свободной памяти.

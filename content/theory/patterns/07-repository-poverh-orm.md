@@ -6,6 +6,7 @@ section: patterns
 level: senior
 sortOrder: 7
 summary: Почему generic-репозиторий над DbContext повторяет то, что EF Core уже даёт, и при этом отнимает его возможности, где репозиторий агрегата действительно оправдан и как развести запись и чтение.
+questions: architecture-patterns-kogda-pattern-repository-poverh-orm-izbytochen, ef-core-nuzhen-li-repository-pattern-poverh-ef-core, ef-core-chto-takoe-unit-of-work
 ---
 
 Вопрос «нужен ли Repository поверх EF Core» проверяет не знание паттерна, а умение отличить паттерн от ритуала. Ответы «всегда, это чистая архитектура» и «никогда, это антипаттерн» одинаково слабые. Сильный ответ объясняет, что обёртка добавляет к уже существующему, и называет случаи, где она только отнимает.

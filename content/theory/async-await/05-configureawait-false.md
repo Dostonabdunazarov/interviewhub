@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 5
 summary: Что именно отключает этот вызов, где он обязателен, где бесполезен и почему в ASP.NET Core его перестали писать.
+questions: async-chto-delaet-configureawait-false, async-chto-takoe-synchronizationcontext
 ---
 
 `ConfigureAwait(false)` говорит одну вещь: «после ожидания возвращаться в захваченный контекст не нужно, продолжай где угодно». Всё остальное — следствия. Вызов окружён мифами («ускоряет», «делает код параллельным», «нужен всегда»), поэтому полезно разобраться, что он делает буквально.

@@ -6,6 +6,7 @@ section: performance
 level: senior
 sortOrder: 4
 summary: Что на самом деле значит высокое время в GC, как классифицировать сборки по трассировке и почему выживаемость объектов стоит дороже их количества.
+questions: performance-profiling-chto-oznachaet-vysokii-procent-vremeni-v-gc-i-s-chego-nachat-optimizac, performance-profiling-kak-otlichit-problemu-gc-ot-problemy-algoritma-po-metrikam, advanced-csharp-chto-takoe-gc-pressure-i-po-kakim-metrikam-vy-poimete-chto-on-stal-uzk
 ---
 
 Высокое время в GC означает, что заметная доля процессора и пауз приложения уходит на сборки, а не на полезную работу. Начинать с переписывания кода — ошибка: сначала нужно понять, **почему** сборщик работает так часто или так долго. Причин три — объём аллокаций, выживаемость объектов и нехватка памяти, — и лечатся они по-разному: кодом, временем жизни объектов или конфигурацией. Механику сборок, поколений и LOH раздел про CLR уже разобрал (`Как работает GC`, `Поколения Gen 0–2`), здесь — как это диагностировать.

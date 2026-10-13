@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 11
 summary: Почему lock не работает с await, как правильно построить асинхронную блокировку на SemaphoreSlim, во сколько раз блокирующий Wait хуже WaitAsync под нагрузкой, блокировка по ключу, однократная инициализация, и чем AsyncLocal отличается от ThreadLocal.
+questions: multithreading-chto-ispolzovat-vmesto-lock-esli-nuzhna-asinhronnaya-blokirovka, advanced-concurrency-kak-pravilno-realizovat-asinhronnuyu-blokirovku-i-pochemu-lock-tut-ne, advanced-concurrency-chem-semaphoreslim-waitasync-luchshe-blokiruyuschego-wait-pri-vysokoi, multithreading-mozhno-li-ispolzovat-lock-s-async-await, multithreading-pochemu-nelzya-delat-await-vnutri-obychnogo-lock, advanced-concurrency-kak-ogranichit-concurrency-pri-obraschenii-k-vneshnemu-servisu-dopuska
 ---
 
 Все примитивы из предыдущих статей — `lock`, `Monitor`, `Mutex`, `ReaderWriterLockSlim` — защищают **поток**: владелец блокировки — конкретный поток ОС, и только он может её освободить. В асинхронном коде единица работы другая — **логическая операция**, которая после каждого `await` может продолжиться на другом потоке пула. Поэтому для неё нужны другие инструменты: блокировка без владельца, ожидание без потока и контекст, который переезжает вместе с операцией.

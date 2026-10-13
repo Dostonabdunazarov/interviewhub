@@ -6,6 +6,7 @@ section: performance
 level: senior
 sortOrder: 5
 summary: gcdump и полный дамп, команды SOS от dumpheap до gcroot, ловушки чтения кучи и как снимать дамп в Kubernetes, не убив под.
+questions: performance-profiling-kak-proanalizirovat-damp-pamyati-i-naiti-istochnik-utechki, performance-profiling-kak-snyat-damp-v-konteinere-kubernetes-i-kakie-podvodnye-kamni-pri-eto, performance-profiling-potreblenie-pamyati-postoyanno-rastet-kak-vystroit-rassledovanie, clr-gc-kak-mozhno-diagnostirovat-problemy-s-pamyatyu, advanced-csharp-prilozhenie-potreblyaet-8-gb-no-dotnet-counters-pokazyvaet-heap-1-gb-k
 ---
 
 Профиль аллокаций отвечает на вопрос «кто создаёт», дамп — на вопрос «кто держит». Когда память растёт и не возвращается, нужен именно второй: виновник утечки почти никогда не сам растущий тип, а корень, который его удерживает, — статический кэш, подписка на событие, таймер. Как такие утечки возникают, разобрано в статье `Утечки памяти в managed-коде`; здесь — как их находить в снимке памяти, с выводом реальных команд на .NET 10.0.10.

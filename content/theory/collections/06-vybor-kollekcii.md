@@ -6,6 +6,7 @@ section: collections
 level: middle
 sortOrder: 6
 summary: Сводная таблица сложностей, специализированные коллекции от очередей до Frozen, потокобезопасные варианты и типовые ошибки выбора.
+questions: algorithms-kogda-ispolzovat-dictionary-a-kogda-hashset, algorithms-chto-takoe-queue, algorithms-chto-takoe-stack
 ---
 
 Эта статья собирает раздел воедино: какая коллекция под какую задачу, с измеренными числами вместо общих слов. Правило, которое стоит держать в голове с самого начала: **по умолчанию `List<T>` и `Dictionary<TKey,TValue>`**, а всё остальное — под конкретную задачу и желательно после замера.

@@ -6,6 +6,7 @@ section: data-at-scale
 level: middle
 sortOrder: 3
 summary: Топологии репликации от leader-follower до кворумов, синхронный и асинхронный режим как выбор между задержкой и потерями, этапы failover, split-brain и fencing, и что должно уметь приложение в момент переключения.
+questions: system-design-chto-takoe-replication, system-design-chto-takoe-failover, advanced-postgresql-kak-vypolnit-pereklyuchenie-na-repliku-bez-poteri-dannyh-i-kakoi-cenoi, system-design-chto-proizoidet-esli-postgresql-stanet-nedostupen, distributed-systems-kak-realizovat-vybor-lidera-i-chto-proizoidet-pri-split-brain, system-design-kak-obespechit-high-availability
 ---
 
 Репликация хранит копии одних и тех же данных на нескольких узлах и решает три разные задачи: отказоустойчивость (есть куда переключиться), масштабирование чтения (читать с копий) и задержку (копия ближе к пользователю). Failover — переключение работы с отказавшего узла на резервный. Обе темы на собеседовании проверяют не знание конкретной базы, а понимание того, что копии никогда не совпадают мгновенно и что переключение — самый опасный момент в жизни системы. Механика для одной СУБД разобрана в статье `Репликация` раздела PostgreSQL; здесь — взгляд на систему из многих узлов.

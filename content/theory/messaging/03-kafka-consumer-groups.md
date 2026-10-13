@@ -6,6 +6,7 @@ section: messaging
 level: middle
 sortOrder: 3
 summary: Как consumer group делит партиции, почему лишние consumer'ы простаивают, где хранятся offset'ы, что запускает ребалансировку, чем eager отличается от cooperative и нового протокола KIP-848, и какие таймауты выкидывают consumer'а из группы.
+questions: kafka-chto-takoe-consumer-group, kafka-kak-consumer-group-raspredelyaet-partitions, kafka-chto-proizoidet-esli-consumers-bolshe-chem-partitions, kafka-chto-takoe-consumer-rebalance, kafka-advanced-chem-cooperative-rebalancing-luchshe-eager-i-kogda-stoit-perehodit, kafka-advanced-chto-proishodit-vo-vremya-consumer-rebalance-i-kak-minimizirovat-prost, kafka-kak-masshtabirovat-kafka-consumers, kafka-chto-proizoidet-esli-consumer-upal
 ---
 
 Consumer group — набор consumer'ов с одинаковым `group.id`, которые вместе читают топик: каждая партиция в группе назначается ровно одному участнику. Этот механизм одновременно делит нагрузку между экземплярами одного сервиса и позволяет разным сервисам читать один топик независимо. О группах спрашивают почти на каждом собеседовании по Kafka, и чаще всего — про ребалансировку: именно она стоит за ростом lag при деплоях, дублями после рестартов и consumer'ами, которые «сами вылетают».

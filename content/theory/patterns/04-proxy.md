@@ -6,6 +6,7 @@ section: patterns
 level: middle
 sortOrder: 4
 summary: Чем Proxy отличается от Decorator по намерению, какие бывают прокси — ленивые, удалённые, защитные — и как устроены динамические прокси DispatchProxy и Castle DynamicProxy.
+questions: architecture-patterns-chem-proxy-otlichaetsya-ot-decorator-po-naznacheniyu
 ---
 
 Proxy — объект, который реализует тот же интерфейс, что и реальный объект, и стоит между ним и клиентом. Структурно это ровно то же, что декоратор: тот же интерфейс плюс ссылка на другой объект. Поэтому главный вопрос на собеседовании — «чем Proxy отличается от Decorator», и ответ лежит не в коде, а в намерении.

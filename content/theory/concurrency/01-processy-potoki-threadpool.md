@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 1
 summary: Чем процесс отличается от потока, во что обходится создание потока, как устроен пул потоков .NET и почему он так медленно реагирует на заблокированные потоки.
+questions: multithreading-chem-process-otlichaetsya-ot-potoka, multithreading-chto-takoe-thread, multithreading-chto-takoe-threadpool, multithreading-kak-rabotaet-threadpool-v-net, advanced-concurrency-chto-takoe-threadpool-starvation-kak-on-proyavlyaetsya-v-metrikah-i-ch, async-chem-task-otlichaetsya-ot-thread
 ---
 
 Почти всё, что в .NET выполняется «параллельно», выполняется на потоках пула: продолжения после `await`, `Task.Run`, обработка запросов в ASP.NET Core, таймеры. Чтобы понимать, почему сервис внезапно перестаёт отвечать при почти нулевой загрузке CPU, нужно знать три вещи: что такое поток, сколько он стоит и по каким правилам пул решает, сколько потоков держать.

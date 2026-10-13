@@ -6,6 +6,7 @@ section: data-at-scale
 level: middle
 sortOrder: 4
 summary: Уровни кэша от браузера до Redis, cache-aside и write-through, гонка при инвалидации и почему ключ удаляют, а не перезаписывают, вытеснение в Redis, hit ratio как главная метрика и что делать, когда кэш упал.
+questions: microservices-cache-aside-pattern, microservices-write-through-vs-write-behind-cache, sd-cache-invalidation, microservices-chto-takoe-cache-invalidation, system-design-chto-takoe-caching-layer, microservices-gde-ispolzovat-cache, system-design-kogda-nuzhen-redis, system-design-senior-chto-proizoidet-pri-nedostupnosti-redis-i-kak-zaranee-sproektirovat-de
 ---
 
 Кэш — промежуточный слой быстрого хранилища между потребителем и медленным или дорогим источником. Он отдаёт частые результаты без обращения к источнику, снижая задержку и нагрузку, а платят за это тем, что данные могут быть устаревшими. Кэш легко добавить и трудно сделать правильно: почти все проблемы с ним — не про скорость, а про согласованность с источником и про то, что происходит, когда кэша вдруг нет.

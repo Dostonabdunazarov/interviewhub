@@ -6,6 +6,7 @@ section: delivery
 level: senior
 sortOrder: 2
 summary: Как Deployment заменяет поды при rolling update и что значат maxSurge и maxUnavailable, как устроены blue-green и canary в Kubernetes, по каким признакам выбирать стратегию и что ни одна из них не решает за вас.
+questions: devops-senior-kogda-stoit-vybrat-blue-green-a-kogda-canary, devops-senior-kak-organizovat-canary-deploi-i-po-kakim-metrikam-prinimat-reshenie-ob, devops-senior-kak-ustroen-rolling-deployment-i-chto-proizoidet-pri-nesovmestimoi-mig
 ---
 
 Стратегия выкатки отвечает на два вопроса: сколько пользователей увидят новую версию, прежде чем вы узнаете, что она сломана, и сколько займёт возврат назад. Rolling update, blue-green и canary дают разные ответы и стоят разных денег. На собеседовании ждут не определений, а умения выбрать под конкретный сервис и назвать, что сломается при любом выборе, — чаще всего это общая база и консьюмеры очередей.

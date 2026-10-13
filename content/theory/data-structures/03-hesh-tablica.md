@@ -6,6 +6,7 @@ section: data-structures
 level: middle
 sortOrder: 3
 summary: Как из массива и хеш-функции получается поиск за O(1), неизбежность коллизий, цепочки против открытой адресации, коэффициент заполнения и откуда берётся худший случай O(n).
+questions: algorithms-chto-takoe-hash-table, csharp-kak-rabotaet-dictionary, algorithms-slozhnost-poiska-v-dictionary, csharp-dlya-chego-nuzhen-gethashcode, csharp-kak-rabotaet-hashset, csharp-pochemu-nelzya-izmenyat-obekt-poka-on-ispolzuetsya-kak-klyuch-dictiona
 ---
 
 Хеш-таблица — ответ на вопрос «как найти элемент, не перебирая остальные». Это самая полезная структура на алгоритмической секции: половина задач, где наивное решение квадратичное, решается заведением словаря или множества. Здесь — общая идея и её компромиссы, одинаковые для любого языка. Как конкретно устроены `Dictionary` и `HashSet` в .NET, разобрано в статьях `Как устроен Dictionary` и `HashSet<T>`.

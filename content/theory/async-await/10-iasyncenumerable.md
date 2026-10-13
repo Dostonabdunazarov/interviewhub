@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 10
 summary: Асинхронный поток вместо Task со списком, await foreach и yield return вместе, отмена через WithCancellation и стриминг из базы и в HTTP.
+questions: async-kak-rabotaet-iasyncenumerable-t, csharp-chto-takoe-iasyncenumerable-t, async-chem-await-foreach-otlichaetsya-ot-obychnogo-foreach, async-chto-takoe-async-streaming
 ---
 
 `Task<List<T>>` возвращает всё сразу: пока не готов последний элемент, вызывающий не получит ни одного. `IAsyncEnumerable<T>` отдаёт элементы **по мере готовности**, не собирая их в память. Это соединение двух механизмов, которые до C# 8 не сочетались: итераторов из `yield return` и асинхронности.

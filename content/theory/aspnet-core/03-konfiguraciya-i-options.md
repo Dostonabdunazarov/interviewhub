@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 3
 summary: Как провайдеры конфигурации накладываются друг на друга, почему переменная окружения перебивает appsettings.json, чем различаются IOptions, IOptionsSnapshot и IOptionsMonitor и где хранить секреты.
+questions: aspnet-core-kak-ustroena-konfiguraciya-asp-net-core, aspnet-core-chto-takoe-ioptions-ioptionssnapshot-i-ioptionsmonitor, aspnet-core-chto-takoe-options-pattern, aspnet-core-kak-hranit-secrets-configuration
 ---
 
 Конфигурация в ASP.NET Core устроена проще, чем кажется по количеству API вокруг неё: это плоский словарь «строковый ключ → строковое значение», собранный из нескольких источников. Всё остальное — типизированные классы, валидация, перезагрузка без рестарта — надстройки над этим словарём. Если понять, как источники накладываются друг на друга, почти все вопросы вида «почему приложение видит не то значение» решаются сами.

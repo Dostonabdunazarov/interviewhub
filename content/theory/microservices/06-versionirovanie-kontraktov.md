@@ -6,6 +6,7 @@ section: microservices
 level: senior
 sortOrder: 6
 summary: Как менять API и события между сервисами без согласованных релизов: backward и forward совместимость и порядок деплоя, правила эволюции protobuf, почему события версионировать труднее, чем REST, режимы Schema Registry, tolerant reader в System.Text.Json и consumer-driven contract testing.
+questions: microservices-advanced-kak-versionirovat-sobytiya-chtoby-ne-lomat-podpischikov, microservices-advanced-kak-soglasovyvat-kontrakty-mezhdu-servisami-i-chto-daet-contract-testi, microservices-chto-takoe-contract-testing, kafka-advanced-kak-perenesti-obrabotku-na-novuyu-shemu-soobschenii-bez-prostoya, microservices-kak-versionirovat-api, advanced-aspnet-kak-organizovat-versionirovanie-api-chtoby-ne-lomat-klientov-pri-izmen
 ---
 
 Главное обещание микросервисов — независимый деплой. Оно держится ровно до первого изменения контракта, которое требует выкатить провайдера и всех потребителей одновременно. Версионирование контрактов — это набор правил, позволяющих менять API и события по одному сервису за раз. Про механику версий REST API — URL, заголовки, `Asp.Versioning`, заголовки `Deprecation` и `Sunset` — рассказано в статье `Дизайн API и версионирование`. Здесь — то, что специфично для общения сервисов: совместимость в обе стороны, protobuf, события в брокере и автоматическая проверка контрактов.

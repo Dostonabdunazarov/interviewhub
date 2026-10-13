@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 6
 summary: Делегат как типизированный указатель на метод, multicast и его ловушки, чем событие отличается от поля-делегата и почему события текут памятью.
+questions: csharp-chto-takoe-delegates, csharp-chto-takoe-events, csharp-chem-otlichayutsya-action-func-i-predicate, advanced-csharp-kak-ustroen-vyzov-delegata-i-pochemu-mnogoadresnyi-delegat-dorozhe-odi, csharp-chto-takoe-lambda-expression
 ---
 
 Делегат — типизированная ссылка на метод: переменная, в которую можно положить метод и вызвать его позже. На делегатах держатся события, колбэки, LINQ и вся подписочная механика в .NET. Событие же — не отдельная сущность, а делегат с ограниченным доступом, и понимание этой разницы — типовой вопрос на собеседовании.

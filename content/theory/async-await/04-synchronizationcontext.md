@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 4
 summary: Кто возвращает выполнение в UI-поток после await, почему в ASP.NET Core контекста нет и что от этого меняется в коде.
+questions: async-chto-takoe-synchronizationcontext, async-chto-proishodit-posle-await, advanced-concurrency-chem-asynclocal-otlichaetsya-ot-threadlocal-i-gde-eto-kritichno
 ---
 
 После `await` выполнение иногда продолжается на том же потоке, а иногда на другом. Решает это `SynchronizationContext` — абстракция «куда доставить продолжение». Понимание её устройства сразу объясняет и дедлоки на `.Result`, и смысл `ConfigureAwait(false)`, и почему один и тот же код ведёт себя по-разному в WinForms и в веб-сервисе.

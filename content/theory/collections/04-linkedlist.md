@@ -6,6 +6,7 @@ section: collections
 level: middle
 sortOrder: 4
 summary: Двусвязный список, честная цена узлов, почему теоретическое преимущество вставки редко окупается и где он действительно нужен.
+questions: csharp-chem-list-t-otlichaetsya-ot-linkedlist-t, algorithms-chto-takoe-linked-list, algorithms-kak-realizovat-lru-cache
 ---
 
 `LinkedList<T>` — двусвязный список: каждый элемент лежит в отдельном узле со ссылками на соседей. В учебниках он подаётся как структура с дешёвой вставкой, и это правда. На практике он почти всегда проигрывает `List<T>` — и полезно понимать, почему.

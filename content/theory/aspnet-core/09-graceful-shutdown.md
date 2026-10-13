@@ -6,6 +6,7 @@ section: aspnet-core
 level: senior
 sortOrder: 9
 summary: Что делает Generic Host по SIGTERM, что происходит с запросами в работе и пришедшими после сигнала, как фоновым сервисам успеть остановиться и почему в Kubernetes запросы теряются даже при правильном коде.
+questions: aspnet-core-kak-sdelat-graceful-shutdown, aspnet-core-chto-proishodit-s-zaprosami-pri-ostanovke-prilozheniya, advanced-aspnet-chto-proishodit-s-tekuschimi-zaprosami-pri-graceful-shutdown-i-kak-ne
 ---
 
 Приложение останавливают постоянно: каждый деплой, каждое масштабирование вниз, каждый переезд пода на другой узел. Если остановка грубая, каждый такой момент — это оборванные запросы, недообработанные сообщения и всплеск 502 на графиках. Graceful shutdown — остановка, при которой приложение перестаёт принимать новую работу, доделывает текущую и освобождает ресурсы. В ASP.NET Core механизм для этого уже есть, но работает он только при соблюдении нескольких условий в коде и в окружении.

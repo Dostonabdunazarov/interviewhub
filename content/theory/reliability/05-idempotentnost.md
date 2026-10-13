@@ -6,6 +6,7 @@ section: reliability
 level: middle
 sortOrder: 5
 summary: Почему повторы в распределённой системе неизбежны, какие операции идемпотентны сами по себе, как устроен ключ идемпотентности на сервере и почему его запись должна попасть в одну транзакцию с бизнес-изменением, и где схема ломается.
+questions: distributed-systems-kak-obespechit-idempotentnost-operacii-esli-klient-povtoryaet-zapros-p, microservices-kak-sdelat-api-idempotent, system-design-kak-obespechit-idempotency-v-raspredelennoi-sisteme, advanced-aspnet-kak-realizovat-idempotentnyi-post-endpoint-v-raspredelennoi-sisteme, microservices-chto-takoe-idempotency, kafka-kak-sdelat-obrabotku-kafka-message-idempotentnoi, kafka-chto-takoe-idempotent-consumer, microservices-kak-obrabatyvat-povtornye-soobscheniya
 ---
 
 Идемпотентная операция даёт тот же эффект, сколько бы раз её ни выполнили с теми же входными данными. В распределённой системе это не приятное свойство, а условие корректности: повторы неизбежны. Клиент не дождался ответа и повторил запрос, пользователь дважды нажал «Оплатить», брокер с гарантией at-least-once доставил сообщение второй раз, провайдер прислал вебхук повторно. Если операция при этом не идемпотентна, каждый такой повтор — двойной заказ или двойное списание.

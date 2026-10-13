@@ -6,6 +6,7 @@ section: ef-core
 level: middle
 sortOrder: 1
 summary: Как DbContext запоминает загруженные сущности, когда и во что обходится DetectChanges, почему повторный запрос не обновляет объект и чем Update отличается от Attach.
+questions: ef-core-kak-rabotaet-change-tracking, ef-core-chto-takoe-tracking-i-no-tracking-query, ef-core-kogda-ispolzovat-asnotracking, ef-core-kak-rabotaet-dbcontext
 ---
 
 `DbContext` — это не просто способ отправить SQL. Каждая сущность, которую вернул обычный запрос, регистрируется в **change tracker**: контекст запоминает её ключ, исходные значения свойств и состояние. Когда вы вызываете `SaveChanges()`, EF сравнивает текущие значения с запомненными и сам решает, какие `INSERT`, `UPDATE` и `DELETE` выполнить. Почти всё неожиданное поведение EF Core — от «изменения не сохранились» до «запрос вернул старые данные» — объясняется устройством трекера.

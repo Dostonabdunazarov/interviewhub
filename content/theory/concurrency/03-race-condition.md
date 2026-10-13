@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 3
 summary: Почему count++ теряет инкременты, какие бывают гонки, чем data race отличается от race condition, почему потокобезопасные операции не складываются в потокобезопасную комбинацию и как ловить гонку, которая случается раз в сутки.
+questions: multithreading-chto-takoe-race-condition, multithreading-chto-takoe-thread-safety, multithreading-kak-pravilno-sinhronizirovat-dostup-k-obschemu-sostoyaniyu, advanced-concurrency-kak-protestirovat-kod-na-race-condition-esli-bag-vosproizvoditsya-raz
 ---
 
 Race condition (состояние гонки) — ошибка, при которой результат зависит от того, в каком порядке и с каким наложением выполнились операции нескольких потоков. Это самый частый и самый неприятный дефект многопоточного кода: он не воспроизводится на машине разработчика, проходит тесты и вылезает под нагрузкой в продакшене.

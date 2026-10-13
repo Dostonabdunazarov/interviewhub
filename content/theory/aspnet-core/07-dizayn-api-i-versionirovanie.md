@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 7
 summary: Ресурсы и семантика HTTP-методов, коды ответа и ProblemDetails, идемпотентный POST, rate limiting, а также какие изменения контракта ломают клиентов и как Asp.Versioning держит несколько версий рядом.
+questions: aspnet-core-kak-realizovat-api-versioning, advanced-aspnet-kak-organizovat-versionirovanie-api-chtoby-ne-lomat-klientov-pri-izmen, aspnet-core-kak-sdelat-idempotent-api-endpoint, aspnet-core-kakie-http-methods-yavlyayutsya-idempotent, aspnet-core-kakie-http-status-codes-nuzhno-znat-backend-razrabotchiku, aspnet-core-chto-takoe-problemdetails, aspnet-core-kak-realizovat-rate-limiting-v-asp-net-core, aspnet-core-chto-takoe-rest
 ---
 
 Хороший HTTP API предсказуем: клиент по методу понимает, можно ли повторить запрос, по коду — что пошло не так, по телу ошибки — что именно. Эти соглашения важны не ради эстетики. На них полагаются ретраи, кэши, балансировщики и мониторинг, и API, который их нарушает, ломает инфраструктуру вокруг себя. Версионирование — продолжение той же темы: как менять контракт и не ломать тех, кто на него уже опирается.

@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 4
 summary: Что общего у двух моделей и где они расходятся — binding, валидация, фильтры, AOT, — как устроен каждый подход внутри и по каким признакам выбирать между ними.
+questions: aspnet-core-controller-vs-minimal-api, aspnet-core-chto-takoe-minimal-api, aspnet-core-chto-takoe-controller, aspnet-core-chto-takoe-model-binding, aspnet-core-chto-takoe-model-validation
 ---
 
 Вопрос «Minimal API или контроллеры» часто задают так, будто это два разных фреймворка. На деле оба работают поверх одного endpoint routing, одного конвейера middleware, одной аутентификации и одного DI. Различается только то, как описан обработчик и какая инфраструктура его окружает. Поэтому честный ответ начинается не с выбора, а с того, что у них общего.

@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 1
 summary: Как собирается конвейер запроса, почему порядок middleware — это логика приложения, что такое short-circuit и какие ошибки в своём middleware встречаются чаще всего.
+questions: aspnet-core-kak-ustroen-request-pipeline-v-asp-net-core, aspnet-core-chto-takoe-middleware, aspnet-core-v-kakom-poryadke-vypolnyayutsya-middleware, aspnet-core-chto-proizoidet-esli-middleware-ne-vyzovet-next, aspnet-core-kak-napisat-sobstvennyi-middleware, advanced-aspnet-kak-vliyaet-poryadok-middleware-na-proizvoditelnost-i-korrektnost, advanced-aspnet-kak-ustroen-konveier-asp-net-core-iznutri-i-chto-proishodit-ot-soketa
 ---
 
 Всё, что ASP.NET Core делает с HTTP-запросом, происходит в конвейере — цепочке компонентов, через которую запрос проходит «вниз» до обработчика, а ответ возвращается «вверх». Эти компоненты называются middleware. Почти любая неочевидная проблема веб-приложения — авторизация не видит токен, CORS отдаёт 401, ошибка не логируется — объясняется тем, в каком порядке они стоят.

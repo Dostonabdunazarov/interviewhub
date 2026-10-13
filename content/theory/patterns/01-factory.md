@@ -6,6 +6,7 @@ section: patterns
 level: middle
 sortOrder: 1
 summary: Когда хватает конструктора, когда нужен статический фабричный метод или фабрика-сервис, чем Factory Method отличается от Abstract Factory и кто освобождает созданный объект.
+questions: architecture-patterns-kak-vybrat-mezhdu-factory-i-pryamym-konstruktorom
 ---
 
 «Фабрика» на собеседовании — это сразу несколько разных вещей: статический метод `Create`, класс-фабрика, Factory Method и Abstract Factory из GoF, `IHttpClientFactory` из платформы. Общий у них только мотив — у создания объекта появилась собственная логика, которую не хочется размазывать по вызывающему коду. Правильный ответ начинается не с паттерна, а с вопроса: а зачем здесь что-то кроме конструктора?

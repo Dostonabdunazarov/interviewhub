@@ -6,6 +6,7 @@ section: clr-memory
 level: middle
 sortOrder: 7
 summary: Почему GC не освобождает файлы и сокеты, канонический Dispose pattern, цена финализатора в двух сборках и когда финализатор не нужен вовсе.
+questions: clr-gc-chto-takoe-idisposable, clr-gc-zachem-nuzhen-dispose, clr-gc-kak-rabotaet-using, clr-gc-chem-dispose-otlichaetsya-ot-finalizer, clr-gc-chto-takoe-finalizer, clr-gc-kogda-nuzhno-ispolzovat-finalizer, clr-gc-chem-managed-memory-otlichaetsya-ot-unmanaged-memory
 ---
 
 Сборщик мусора управляет памятью — и только ею. Файловые дескрипторы, сокеты, соединения с базой, блокировки и неуправляемые буферы он освобождать не умеет и не должен. Для них существует `IDisposable`, а финализатор — страховка на случай, если про `Dispose` забыли. Разница между этими двумя механизмами и их правильное сочетание — стандартный вопрос на собеседовании.

@@ -6,6 +6,7 @@ section: ef-core
 level: middle
 sortOrder: 2
 summary: Eager, lazy и explicit loading, откуда берётся N+1 и как его поймать, что генерирует Include, почему две коллекции дают декартово произведение и когда проекция лучше всех трёх стратегий.
+questions: ef-core-chto-takoe-problema-n-1, ef-core-kak-obnaruzhit-i-ispravit-n-1, ef-core-chem-eager-lazy-i-explicit-loading-otlichayutsya, ef-core-pochemu-projection-chasto-luchshe-include, ef-core-chto-takoe-include, ef-core-chto-takoe-lazy-loading, ef-core-chto-takoe-eager-loading, ef-core-chto-takoe-explicit-loading
 ---
 
 Навигационное свойство `order.Lines` выглядит как обычная коллекция, но за ним стоит другая таблица. Вопрос «когда и каким запросом её загрузить» EF Core решает тремя способами, и выбор между ними определяет, сколько SQL-команд уйдёт в базу на одну операцию — одна, три или тысяча. Последний вариант называется N+1, и это самая частая проблема производительности в коде на EF.

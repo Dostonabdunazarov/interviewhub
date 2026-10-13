@@ -6,6 +6,7 @@ section: complexity
 level: middle
 sortOrder: 2
 summary: Основные классы сложности на коде C#, замеры того, как они растут на реальных данных, и как по ограничениям задачи понять, какое решение от вас ждут.
+questions: algorithms-chto-takoe-o-1-o-log-n-o-n-o-n-log-n-o-n, algo-big-o-basics, algorithms-chto-takoe-big-o, algorithms-kakaya-slozhnost-binary-search, algorithms-slozhnost-poiska-v-list
 ---
 
 Классов сложности, которые встречаются на собеседовании, немного: константа, логарифм, линия, n log n и квадрат, изредка экспонента. Определения выучить легко, а вот почувствовать, насколько они различаются на практике, проще всего на замерах. Все числа ниже получены на .NET 10.0.10, Windows 11, x64, Release-сборка, медиана из нескольких прогонов после прогрева.

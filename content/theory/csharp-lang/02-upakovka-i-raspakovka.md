@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 2
 summary: Что такое boxing, сколько он стоит, где случается незаметно — и почему в обычном коде на это можно не смотреть.
+questions: csharp-chto-takoe-boxing-i-unboxing, csharp-kogda-proishodit-boxing, clr-gc-chto-takoe-boxing-allocation
 ---
 
 Упаковка — это мост между двумя мирами типов из предыдущей статьи. Значимые типы и ссылочные устроены по-разному, но иногда значимый тип нужно передать туда, где ждут ссылку на объект. Тогда CLR заворачивает значение в объект — и это стоит денег.

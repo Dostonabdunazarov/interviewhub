@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 5
 summary: Пять типов MVC-фильтров и где каждый срабатывает, порядок global → controller → action и свойство Order, чего не ловит exception filter, endpoint filters в Minimal API и граница между фильтром и middleware.
+questions: aspnet-core-kakie-byvayut-filters-v-asp-net-core, aspnet-core-middleware-vs-filter-v-chem-raznica, aspnet-core-chto-takoe-action-filter, aspnet-core-kak-globalno-obrabatyvat-isklyucheniya
 ---
 
 Middleware видит запрос как HTTP: путь, заголовки, поток тела. Но часть сквозной логики требует большего — аргументов action после привязки, `ModelState`, объекта результата до сериализации. Для этого в MVC существует собственный конвейер внутри endpoint'а — фильтры. А в Minimal API у них есть упрощённый аналог.

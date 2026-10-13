@@ -6,6 +6,7 @@ section: postgresql
 level: senior
 sortOrder: 7
 summary: Физическая и логическая репликация в PostgreSQL, синхронный и асинхронный режим, что именно ждёт synchronous_commit, отставание реплики и чтение своих записей, слоты и переключение без потери данных.
+questions: advanced-postgresql-chem-fizicheskaya-replikaciya-otlichaetsya-ot-logicheskoi-i-kogda-nuzh, advanced-postgresql-chto-takoe-replication-lag-kak-ego-izmeryat-i-kakie-posledstviya-u-cht, advanced-postgresql-kak-nastroiki-synchronous-commit-vliyayut-na-nadezhnost-i-proizvoditel, advanced-postgresql-kak-vypolnit-pereklyuchenie-na-repliku-bez-poteri-dannyh-i-kakoi-cenoi, distributed-systems-chto-takoe-read-your-writes-consistency-i-kak-obespechit-ee-pri-chteni, system-design-chto-takoe-replication
 ---
 
 Репликация в PostgreSQL построена на журнале предзаписи (WAL). Каждое изменение сначала попадает в WAL, и только потом изменённые страницы пишутся в файлы данных. Тот же журнал, который нужен для восстановления после сбоя, можно передавать на другой сервер и проигрывать там. От того, что именно передаётся — байты страниц или логические изменения строк, — зависит вид репликации, а от того, чего ждёт коммит, — её гарантии.

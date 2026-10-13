@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 3
 summary: Поток операционной системы, пул, обещание результата и структура вместо объекта: чем эти сущности различаются и что когда брать.
+questions: async-chem-task-otlichaetsya-ot-thread, async-chem-task-otlichaetsya-ot-valuetask, async-chto-takoe-task, async-kogda-nuzhen-task-run, async-pochemu-task-run-obychno-ne-nuzhen-dlya-io-bound-operacii
 ---
 
 `Thread`, `Task` и `ValueTask` часто ставят в один ряд, хотя это сущности разного уровня. `Thread` — поток операционной системы. `Task` — **обещание результата**, которое может вообще не потребовать потока. `ValueTask` — способ не платить за это обещание, когда результат уже есть.

@@ -6,6 +6,7 @@ section: aspnet-core
 level: middle
 sortOrder: 6
 summary: Чем аутентификация отличается от авторизации, как JwtBearer проверяет токен и когда на самом деле появляется 401, что такое claims и политики и какие ошибки с JWT делают чаще всего.
+questions: aspnet-core-authentication-vs-authorization, aspnet-core-kak-rabotaet-jwt-authentication, aspnet-core-gde-i-kak-proveryaetsya-jwt, aspnet-core-chto-takoe-claims, aspnet-core-chto-takoe-policy-based-authorization
 ---
 
 Аутентификация отвечает на вопрос «кто ты», авторизация — «что тебе можно». В ASP.NET Core это два разных middleware с разными результатами, и большая часть путаницы вокруг JWT — от того, что их считают одним шагом. Невалидный токен сам по себе не даёт 401, а валидный токен сам по себе ничего не разрешает.

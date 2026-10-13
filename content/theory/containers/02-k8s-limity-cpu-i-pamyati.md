@@ -6,6 +6,7 @@ section: containers
 level: senior
 sortOrder: 2
 summary: Что Kubernetes делает с requests и limits на уровне cgroup, почему превышение памяти убивает под, а превышение CPU даёт троттлинг и скачки p99, как .NET видит лимиты через ProcessorCount и GCHeapHardLimit и как подобрать числа.
+questions: devops-senior-kak-nastroit-limity-cpu-i-pamyati-dlya-net-v-kubernetes-chtoby-ne-polu, devops-senior-pochemu-prilozhenie-rabotaet-medlennee-pri-limite-cpu-i-kak-eto-svyaza, advanced-csharp-kak-ogranichenie-pamyati-v-kubernetes-vliyaet-na-povedenie-gc-i-pochem, advanced-csharp-kak-vliyaet-servergarbagecollection-i-concurrentgc-na-latency-v-kontei
 ---
 
 Ресурсы пода выглядят как две строчки YAML, но за ними стоят два совершенно разных механизма ядра. Память — несжимаемый ресурс: её превышение заканчивается убийством процесса. CPU — сжимаемый: превышение даёт не падение, а паузу. .NET-сервис при этом не пассивный потребитель: рантайм сам читает лимиты контейнера и по ним решает, сколько куч заводить сборщику, сколько потоков держать в пуле и какого размера может быть куча. Если лимиты и рантайм не согласованы, получаются два классических инцидента — `OOMKilled` и необъяснимые скачки латентности при низкой загрузке CPU.

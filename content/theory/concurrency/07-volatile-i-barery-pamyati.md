@@ -6,6 +6,7 @@ section: concurrency
 level: senior
 sortOrder: 7
 summary: Что гарантирует модель памяти .NET, откуда берутся перестановки и «вечно устаревшее» значение, что именно даёт volatile и чего не даёт, почему код, работающий на x86, ломается на ARM, и где барьеры уже стоят без вашего участия.
+questions: multithreading-chto-takoe-volatile, multithreading-chto-takoe-memory-barrier, advanced-concurrency-zachem-nuzhny-barery-pamyati-i-pochemu-korrektnyi-na-x86-kod-lomaetsya, advanced-csharp-chem-otlichayutsya-garantii-volatile-interlocked-i-volatile-read-write, advanced-csharp-chto-garantiruet-model-pamyati-net-i-pochemu-bez-volatile-ili-barera-c
 ---
 
 Атомарность отвечает на вопрос, увидит ли другой поток значение целиком. Модель памяти отвечает на два других: **когда** он его увидит и **в каком порядке** относительно остальных записей. Ответ «сразу и в порядке строк кода» неверен: и JIT, и процессор переставляют обращения к памяти ради скорости. Пока код синхронизируется через `lock`, `Interlocked` и `Task`, это незаметно; флаг на обычном поле или самописная ленивая инициализация ломаются, причём по-разному на разном железе.

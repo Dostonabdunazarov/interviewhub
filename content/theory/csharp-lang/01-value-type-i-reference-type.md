@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 1
 summary: Что на самом деле хранит переменная, почему «значимые в стеке» — неточность и когда структура уместнее класса.
+questions: dotnet-value-vs-reference-types, csharp-chto-takoe-value-type-i-reference-type, csharp-gde-hranyatsya-value-types-i-reference-types-v-stack-ili-heap, csharp-chem-class-otlichaetsya-ot-struct, csharp-chto-budet-pri-sravnenii-dvuh-struct
 ---
 
 Разделение на значимые и ссылочные типы — первое, что нужно понять про C#, потому что из него следует почти всё остальное: почему структуру копируют, почему `null` бывает только у классов, откуда берётся упаковка и почему два одинаковых объекта не равны друг другу.

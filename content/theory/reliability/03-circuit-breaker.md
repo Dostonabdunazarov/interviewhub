@@ -6,6 +6,7 @@ section: reliability
 level: middle
 sortOrder: 3
 summary: Три состояния предохранителя и пробный запрос в half-open, параметры Polly v8 и их значения по умолчанию, как выбрать пороги от трафика на экземпляр, в каком порядке ставить breaker относительно retry и таймаута и чем его дополняют bulkhead и fallback.
+questions: microservices-advanced-kak-vybrat-porog-dlya-circuit-breaker-i-chto-proizoidet-pri-nevernoi-n, microservices-chto-takoe-circuit-breaker, microservices-advanced-kak-kombinirovat-circuit-breaker-retry-i-timeout-chtoby-oni-ne-konflik, microservices-chto-takoe-bulkhead-pattern, microservices-kak-obespechit-otkazoustoichivost-mikroservisnoi-sistemy
 ---
 
 Повтор помогает, когда сбой короткий. Когда зависимость лежит минутами, повторы только добавляют ей нагрузки, а вызывающий сервис тратит потоки и соединения на запросы, которые заведомо закончатся ошибкой. Circuit breaker — «автоматический выключатель» — следит за долей отказов и при её превышении на время перестаёт ходить в зависимость: вызов сразу завершается ошибкой или fallback-ответом. Медленный отказ превращается в быстрый, зависимость получает паузу на восстановление, а вызывающий не тонет вместе с ней.

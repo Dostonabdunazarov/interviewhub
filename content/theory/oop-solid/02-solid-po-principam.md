@@ -6,6 +6,7 @@ section: oop-solid
 level: middle
 sortOrder: 2
 summary: Пять принципов SOLID на примерах кода: что каждый говорит на самом деле, как выглядит нарушение и чем DIP отличается от DI-контейнера.
+questions: csharp-chto-takoe-solid, architecture-patterns-kak-primenit-dependency-inversion-ne-sozdavaya-interfeis-na-kazhdyi-kl, architecture-patterns-kak-vyglyadit-narushenie-liskov-substitution-principle-na-realnom-prim
 ---
 
 SOLID — пять принципов объектного дизайна, собранных Робертом Мартином. Расшифровать аббревиатуру может любой кандидат, поэтому на собеседовании её почти не спрашивают в лоб. Спрашивают иначе: «приведите пример нарушения SRP из своего кода» или «чем DIP отличается от DI». Все пять принципов про одно — как устроить зависимости, чтобы изменение в одном месте не расползалось по системе, — и каждый удобнее понимать через симптом, который он лечит.

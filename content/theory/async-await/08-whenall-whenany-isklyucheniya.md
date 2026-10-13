@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 8
 summary: Параллельный запуск задач, почему await показывает только одно исключение из нескольких, брошенные задачи после WhenAny и ограничение параллелизма.
+questions: async-chto-delaet-task-whenall, async-chto-delaet-task-whenany, async-chto-proizoidet-esli-odna-iz-zadach-v-task-whenall-zavershitsya-s-exce, async-kak-obrabatyvayutsya-isklyucheniya-v-async-metodah, async-kak-ogranichit-kolichestvo-odnovremenno-vypolnyayuschihsya-async-zadac, multithreading-chem-parallel-foreachasync-otlichaetsya-ot-task-whenall
 ---
 
 `Task.WhenAll` и `Task.WhenAny` — основные способы работать с несколькими задачами сразу. Оба просты в использовании и оба имеют неочевидное поведение при ошибках: `WhenAll` скрывает часть исключений, а `WhenAny` оставляет проигравшие задачи выполняться. Разберём с проверкой на реальных замерах.

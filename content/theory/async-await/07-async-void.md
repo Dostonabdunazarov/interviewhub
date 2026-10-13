@@ -6,6 +6,7 @@ section: async-await
 level: middle
 sortOrder: 7
 summary: Почему исключение из async void роняет процесс, как его нельзя дождаться и протестировать, и единственный случай, где он уместен.
+questions: async-pochemu-async-void-obychno-ispolzovat-ne-rekomenduetsya, async-kak-obrabatyvayutsya-isklyucheniya-v-async-metodah
 ---
 
 `async void` — форма, которую в C# разрешили ради одного сценария и которая во всех остальных случаях создаёт проблемы: её нельзя дождаться, её исключения не ловятся обычным `try/catch` и роняют процесс. Разбираемся, откуда это следует и что писать вместо.

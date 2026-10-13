@@ -6,6 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 4
 summary: Неизменяемость строк, интернирование, когда StringBuilder нужен и когда он лишний, и как правильно сравнивать строки.
+questions: csharp-chem-otlichayutsya-string-i-stringbuilder, csharp-pochemu-string-immutable, csharp-chto-takoe-immutable-object-i-zachem-on-nuzhen
 ---
 
 `string` — ссылочный тип, который ведёт себя как значимый: сравнивается по содержимому и не меняется после создания. Из этой неизменяемости следует и удобство строк, и главная ловушка производительности, ради которой существует `StringBuilder`.

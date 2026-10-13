@@ -6,6 +6,7 @@ section: concurrency
 level: middle
 sortOrder: 5
 summary: Межпроцессный Mutex и его цена, семафор как ограничитель N одновременных операций, разница Semaphore и SemaphoreSlim, и когда блокировка читателей-писателей действительно быстрее обычного lock.
+questions: multithreading-chto-takoe-mutex, multithreading-chem-mutex-otlichaetsya-ot-lock, multithreading-chto-takoe-semaphore, multithreading-chem-semaphore-otlichaetsya-ot-semaphoreslim, multithreading-chto-takoe-readerwriterlockslim
 ---
 
 `lock` закрывает самый частый сценарий — один поток в секции, внутри одного процесса. Остальные примитивы появляются, когда нужно что-то сверх этого: синхронизировать несколько процессов, пустить в секцию не одного, а N участников, или разрешить читателям работать одновременно. У каждого своя цена, и выбор «на всякий случай» обычно оборачивается замедлением на порядки.

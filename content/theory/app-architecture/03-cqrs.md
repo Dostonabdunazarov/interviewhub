@@ -6,6 +6,7 @@ section: app-architecture
 level: senior
 sortOrder: 3
 summary: Что такое CQRS на четырёх уровнях — от раздельных обработчиков до отдельного хранилища чтения и Event Sourcing, — какую сложность приносит каждый уровень и как понять, что CQRS в сервисе не нужен.
+questions: microservices-advanced-kogda-cqrs-opravdan-i-kakuyu-slozhnost-on-prinosit, microservices-advanced-kak-borotsya-s-zaderzhkoi-sinhronizacii-read-modeli-v-cqrs
 ---
 
 «Мы используем CQRS» — одна из самых неоднозначных фраз на собеседовании. За ней может стоять что угодно: от папок `Commands` и `Queries` с MediatR над одной базой до отдельного Elasticsearch, наполняемого событиями из Kafka. Между этими вариантами — разница в сложности на порядок, и первый уточняющий вопрос интервьюера обычно «какой именно CQRS». Эта статья — про то, как отвечать на него и как решать, сколько CQRS нужно конкретному сервису.

@@ -6,6 +6,7 @@ section: performance
 level: senior
 sortOrder: 3
 summary: Как найти, кто аллоцирует в живом сервисе, почему выборка по байтам не показывает утечку и по каким признакам аллокация действительно важна.
+questions: performance-profiling-kak-profilirovat-allokacii-i-opredelit-kakie-iz-nih-deistvitelno-vazhn, advanced-csharp-kak-naiti-i-ubrat-allokacii-v-goryachem-puti-esli-profilirovschik-poka, clr-gc-kak-umenshit-kolichestvo-allokacii
 ---
 
 В статье `Снижение аллокаций` разобраны приёмы — пулы, `Span<T>`, структуры, — и правило «сначала измерить». Эта статья про само измерение: как в работающем сервисе узнать, какой код создаёт мусор, и как отличить аллокации, которые определяют работу GC, от тех, что просто попались на глаза. Второе важнее первого: профиль почти всегда показывает десятки «некрасивых» мест, а влияют на задержки одно-два.
