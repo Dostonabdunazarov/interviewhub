@@ -17,6 +17,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<TheorySection> TheorySections => Set<TheorySection>();
     public DbSet<TheoryArticle> TheoryArticles => Set<TheoryArticle>();
     public DbSet<TheoryArticleQuestion> TheoryArticleQuestions => Set<TheoryArticleQuestion>();
+    public DbSet<CodePuzzle> CodePuzzles => Set<CodePuzzle>();
+    public DbSet<CodePuzzleOption> CodePuzzleOptions => Set<CodePuzzleOption>();
+    public DbSet<DevFact> DevFacts => Set<DevFact>();
+    public DbSet<Suggestion> Suggestions => Set<Suggestion>();
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 

@@ -6,6 +6,7 @@ import { useQuestion } from "../lib/hooks";
 import { Markdown } from "../components/Markdown";
 import { Meta, stripMarkdown, truncate } from "../components/Meta";
 import { QuestionNav } from "../components/QuestionNav";
+import { SuggestButton } from "../components/SuggestDialog";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { CompanyLogo } from "../components/ui/CompanyLogo";
@@ -13,7 +14,7 @@ import { DifficultyDots } from "../components/ui/DifficultyDots";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/States";
 import { formatCount, formatDate } from "../lib/utils";
-import { InterviewRound, type Answer } from "../types/api";
+import { InterviewRound, SuggestionKind, type Answer } from "../types/api";
 
 const ROUND_LABELS: Record<number, string> = {
   [InterviewRound.Screening]: "Скрининг",
@@ -249,6 +250,15 @@ export default function QuestionPage() {
           </div>
         </section>
       )}
+
+      <div className="mt-8 flex justify-end">
+        <SuggestButton
+          kind={SuggestionKind.Correction}
+          target={{ type: "question", slug: data.slug, title: data.title }}
+          variant="ghost"
+          label="Нашли неточность? Предложить правку"
+        />
+      </div>
 
       <QuestionNav question={data} />
     </article>

@@ -35,6 +35,7 @@ function parseArgs(argv) {
     if (a === "--dry-run") args.dryRun = true;
     else if (a === "--update") args.update = true;
     else if (a === "--publish") args.publish = true;
+    else if (a === "--all") args.all = true;
     else if (a === "--url") args.url = argv[++i];
     else if (a === "--email") args.email = argv[++i];
     else if (a === "--password") args.password = argv[++i];
@@ -58,6 +59,7 @@ const HELP = `
   --dry-run      показать план, ничего не отправляя
   --update       обновлять статью, если slug уже есть
   --publish      статус «Опубликована» вместо «Черновик»
+  --all          все разделы: каждый подкаталог content/theory
 
 Переменные окружения: IH_API_URL, IH_ADMIN_EMAIL, IH_ADMIN_PASSWORD.
 
@@ -71,6 +73,7 @@ const HELP = `
   level: middle
   sortOrder: 1
   summary: Короткий анонс для карточки и meta description.
+  questions: slug-voprosa-1, slug-voprosa-2
   ---
 
   ## Первый заголовок
@@ -187,9 +190,35 @@ async function loadArticles(dir) {
     files.map(async (file) => {
       const raw = await readFile(join(dir, file), "utf8");
       const { meta, body } = parseFrontmatter(raw, file);
-      return { file, meta, body };
+      const questions =
+        meta.questions === undefined
+          ? undefined
+          : meta.questions.split(",").map((q) => q.trim()).filter(Boolean);
+      return { file, meta, body, questions };
     }),
   );
+}
+
+async function loadDirs(args) {
+  if (!args.all) return loadArticles(args.dir);
+
+  const root = "content/theory";
+  const dirs = (await readdir(root, { withFileTypes: true }))
+    .filter((d) => d.isDirectory())
+    .map((d) => join(root, d.name))
+    .sort();
+
+  return (await Promise.all(dirs.map(loadArticles))).flat();
+}
+
+async function loadQuestionIds(api) {
+  const bySlug = new Map();
+  for (let page = 1; ; page++) {
+    const res = await api.get(`/api/admin/questions/?page=${page}&pageSize=100`);
+    for (const q of res.items) bySlug.set(q.slug, q.id);
+    if (res.items.length === 0 || bySlug.size >= res.totalCount) break;
+  }
+  return bySlug;
 }
 
 async function main() {
@@ -200,7 +229,7 @@ async function main() {
     return;
   }
 
-  const articles = await loadArticles(args.dir);
+  const articles = await loadDirs(args);
 
   if (args.dryRun) {
     console.log(`Каталог: ${args.dir}\nСтатей: ${articles.length}\n`);
@@ -214,6 +243,8 @@ async function main() {
           `order=${meta.sortOrder ?? 0} ≈${Math.max(1, Math.ceil(words / 200))} мин\n`,
       );
     }
+    const links = articles.reduce((n, a) => n + (a.questions?.length ?? 0), 0);
+    console.log(`Привязок к вопросам во фронтматтере: ${links}`);
     console.log("Это dry-run: ничего не отправлено.");
     return;
   }
@@ -231,11 +262,21 @@ async function main() {
   const levels = await api.get("/api/admin/levels");
   const levelBySlug = new Map(levels.map((l) => [l.slug, l.id]));
 
+  const needsQuestions = articles.some((a) => a.questions !== undefined);
+  const questionBySlug = needsQuestions ? await loadQuestionIds(api) : new Map();
+  const unknown = articles.flatMap((a) =>
+    (a.questions ?? []).filter((q) => !questionBySlug.has(q)).map((q) => `${a.file}: ${q}`),
+  );
+  if (unknown.length > 0) {
+    throw new Error(`Неизвестные slug'и вопросов, ничего не отправлено:\n  ${unknown.join("\n  ")}`);
+  }
+
   let created = 0;
   let updated = 0;
   let skipped = 0;
 
-  for (const { file, meta, body } of articles) {
+  for (const { file, meta, body, questions } of articles) {
+    const linked = questions?.map((q) => questionBySlug.get(q));
     const track = tree.find((t) => t.slug === meta.track);
     if (!track) throw new Error(`${file}: трека «${meta.track}» нет в базе`);
 
@@ -277,14 +318,14 @@ async function main() {
       const full = await api.get(`/api/admin/theory/articles/${existing.id}`);
       const result = await api.put(`/api/admin/theory/articles/${existing.id}`, {
         ...payload,
-        questionIds: full.relatedQuestions.map((q) => q.id),
+        questionIds: linked ?? full.relatedQuestions.map((q) => q.id),
       });
       console.log(`  ↻ ${result.slug} — обновлена, ${result.readingMinutes} мин`);
       updated++;
     } else {
       const result = await api.post("/api/admin/theory/articles", {
         ...payload,
-        questionIds: [],
+        questionIds: linked ?? [],
       });
       console.log(`  + ${result.slug} — создана, ${result.readingMinutes} мин`);
       created++;

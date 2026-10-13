@@ -27,6 +27,105 @@ public static class AdminEndpoints
         MapTags(admin);
         MapTheory(admin);
         MapUsers(admin);
+        MapPuzzles(admin);
+        MapFacts(admin);
+        MapSuggestions(admin);
+    }
+
+    private static void MapPuzzles(RouteGroupBuilder admin)
+    {
+        var puzzles = admin.MapGroup("/puzzles");
+
+        puzzles.MapGet("/", async (
+            IPuzzleService service,
+            CancellationToken ct,
+            string? category = null,
+            string? level = null,
+            PuzzleKind? kind = null,
+            QuestionStatus? status = null,
+            int page = 1,
+            int pageSize = 50) =>
+            Results.Ok(await service.SearchAsync(
+                category, level, kind, status, publishedOnly: false, page, pageSize, ct)));
+
+        puzzles.MapGet("/{id:guid}", async (
+            Guid id, IPuzzleService service, CancellationToken ct) =>
+        {
+            var puzzle = await service.GetByIdAsync(id, ct);
+            return puzzle is null ? Results.NotFound() : Results.Ok(puzzle);
+        });
+
+        puzzles.MapPost("/", async (
+            PuzzleInput input, IPuzzleService service,
+            ClaimsPrincipal user, CancellationToken ct) =>
+            (await service.CreateAsync(input, user.GetUserId(), ct))
+                .ToHttpResult(v => Results.Created($"/api/admin/puzzles/{v.Id}", v)))
+            .Validate<PuzzleInput>();
+
+        puzzles.MapPut("/{id:guid}", async (
+            Guid id, PuzzleInput input, IPuzzleService service, CancellationToken ct) =>
+            (await service.UpdateAsync(id, input, ct)).ToHttpResult(Results.Ok))
+            .Validate<PuzzleInput>();
+
+        puzzles.MapDelete("/{id:guid}", async (
+            Guid id, IPuzzleService service, CancellationToken ct) =>
+            (await service.DeleteAsync(id, ct)).ToHttpResult());
+    }
+
+    private static void MapFacts(RouteGroupBuilder admin)
+    {
+        var facts = admin.MapGroup("/facts");
+
+        facts.MapGet("/", async (IFactService service, CancellationToken ct) =>
+            Results.Ok(await service.GetAllAsync(ct)));
+
+        facts.MapGet("/{id:guid}", async (
+            Guid id, IFactService service, CancellationToken ct) =>
+        {
+            var fact = await service.GetByIdAsync(id, ct);
+            return fact is null ? Results.NotFound() : Results.Ok(fact);
+        });
+
+        facts.MapPost("/", async (
+            FactInput input, IFactService service,
+            ClaimsPrincipal user, CancellationToken ct) =>
+            (await service.CreateAsync(input, user.GetUserId(), ct))
+                .ToHttpResult(v => Results.Created($"/api/admin/facts/{v.Id}", v)))
+            .Validate<FactInput>();
+
+        facts.MapPut("/{id:guid}", async (
+            Guid id, FactInput input, IFactService service, CancellationToken ct) =>
+            (await service.UpdateAsync(id, input, ct)).ToHttpResult(Results.Ok))
+            .Validate<FactInput>();
+
+        facts.MapDelete("/{id:guid}", async (
+            Guid id, IFactService service, CancellationToken ct) =>
+            (await service.DeleteAsync(id, ct)).ToHttpResult());
+    }
+
+    private static void MapSuggestions(RouteGroupBuilder admin)
+    {
+        var suggestions = admin.MapGroup("/suggestions");
+
+        suggestions.MapGet("/", async (
+            ISuggestionService service,
+            CancellationToken ct,
+            SuggestionStatus? status = null,
+            int page = 1,
+            int pageSize = 20) =>
+            Results.Ok(await service.SearchAsync(status, page, pageSize, ct)));
+
+        suggestions.MapGet("/counts", async (ISuggestionService service, CancellationToken ct) =>
+            Results.Ok(await service.GetCountsAsync(ct)));
+
+        suggestions.MapPut("/{id:guid}", async (
+            Guid id, SuggestionUpdateInput input, ISuggestionService service, CancellationToken ct) =>
+            (await service.UpdateAsync(id, input, ct)).ToHttpResult(Results.Ok))
+            .Validate<SuggestionUpdateInput>();
+
+        suggestions.MapDelete("/{id:guid}", async (
+            Guid id, ISuggestionService service, CancellationToken ct) =>
+            (await service.DeleteAsync(id, ct)).ToHttpResult());
     }
 
     private static void MapTheory(RouteGroupBuilder admin)

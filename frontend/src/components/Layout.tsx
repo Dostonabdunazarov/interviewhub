@@ -9,6 +9,7 @@ import { cn } from "../lib/utils";
 const NAV = [
   { to: "/questions", label: "Вопросы" },
   { to: "/theory", label: "Теория" },
+  { to: "/puzzles", label: "Задачи" },
   { to: "/levels", label: "Грейды" },
   { to: "/companies", label: "Компании" },
   { to: "/about", label: "О проекте" },
@@ -157,9 +158,14 @@ function Footer() {
                    text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between"
       >
         <p>© {new Date().getFullYear()} InterviewHub — подготовка к собеседованиям</p>
-        <Link to="/about" className="transition-colors hover:text-fg">
-          О проекте
-        </Link>
+        <nav className="flex flex-wrap gap-x-5 gap-y-1">
+          <Link to="/facts" className="transition-colors hover:text-fg">
+            А вы знали?
+          </Link>
+          <Link to="/about" className="transition-colors hover:text-fg">
+            О проекте
+          </Link>
+        </nav>
       </div>
     </footer>
   );

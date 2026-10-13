@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using FluentValidation;
 using InterviewHub.Api.Endpoints;
 using InterviewHub.Api.Filters;
@@ -31,6 +32,9 @@ builder.Services.AddScoped<IQuestionAdminService, QuestionAdminService>();
 builder.Services.AddScoped<ICatalogAdminService, CatalogAdminService>();
 builder.Services.AddScoped<ITheoryAdminService, TheoryAdminService>();
 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.AddScoped<IPuzzleService, PuzzleService>();
+builder.Services.AddScoped<IFactService, FactService>();
+builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 
 // Валидаторы админских DTO живут в Application рядом с самими DTO.
 builder.Services.AddValidatorsFromAssemblyContaining<QuestionInputValidator>();
@@ -72,6 +76,20 @@ builder.Services.AddCors(opt => opt.AddDefaultPolicy(policy => policy
     .AllowAnyMethod()
     .AllowCredentials()));
 
+builder.Services.AddRateLimiter(opt =>
+{
+    opt.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    opt.AddPolicy(PublicEndpoints.SuggestionsRateLimit, http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            PublicEndpoints.ClientKey(http),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
+});
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
@@ -109,6 +127,7 @@ app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapHealthChecks("/health");
 app.MapPublicEndpoints();

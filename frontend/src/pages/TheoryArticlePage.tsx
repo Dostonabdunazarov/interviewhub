@@ -5,6 +5,7 @@ import { useTheoryArticle } from "../lib/theoryHooks";
 import { extractHeadings } from "../lib/headings";
 import { Markdown } from "../components/Markdown";
 import { Meta, stripMarkdown, truncate } from "../components/Meta";
+import { SuggestButton } from "../components/SuggestDialog";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { DifficultyDots } from "../components/ui/DifficultyDots";
@@ -12,7 +13,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/States";
 import { formatCount, formatDate } from "../lib/utils";
 import { cn } from "../lib/utils";
-import type { TheoryArticleDetail } from "../types/api";
+import { SuggestionKind, type TheoryArticleDetail } from "../types/api";
 
 /**
  * Оглавление статьи — только при заголовках сверх порога: на статье с двумя
@@ -245,6 +246,15 @@ export default function TheoryArticlePage() {
           </ul>
         </section>
       )}
+
+      <div className="mt-8 flex justify-end">
+        <SuggestButton
+          kind={SuggestionKind.Correction}
+          target={{ type: "article", slug: data.slug, title: data.title }}
+          variant="ghost"
+          label="Нашли неточность? Предложить правку"
+        />
+      </div>
 
       <ArticleNav previous={data.previous} next={data.next} />
     </article>

@@ -11,6 +11,7 @@ import type {
   PagedResult,
   QuestionDetail,
   QuestionListItem,
+  PuzzleListItem,
   Tag,
   AuthUser,
   TheoryArticleAdmin,
@@ -18,6 +19,13 @@ import type {
   TheoryStatus,
   TheorySectionAdmin,
   TheoryTrackAdmin,
+  FactAdmin,
+  PuzzleAdmin,
+  PuzzleKind,
+  QuestionStatus,
+  Suggestion,
+  SuggestionCounts,
+  SuggestionStatus,
 } from "../types/api";
 import type {
   AnswerInput,
@@ -31,6 +39,9 @@ import type {
   TheoryTrackInput,
   UserCreateInput,
   UserInput,
+  FactInput,
+  PuzzleInput,
+  SuggestionUpdateInput,
 } from "../types/admin";
 
 export const adminKeys = {
@@ -42,7 +53,27 @@ export const adminKeys = {
   theoryArticles: (params: TheoryArticleQueryParams) =>
     ["admin", "theory", "articles", params] as const,
   theoryArticle: (id: string) => ["admin", "theory", "article", id] as const,
+  puzzles: (params: AdminPuzzleQueryParams) => ["admin", "puzzles", params] as const,
+  puzzle: (id: string) => ["admin", "puzzle", id] as const,
+  facts: () => ["admin", "facts"] as const,
+  suggestions: (params: SuggestionQueryParams) => ["admin", "suggestions", params] as const,
+  suggestionCounts: () => ["admin", "suggestions", "counts"] as const,
 };
+
+export interface AdminPuzzleQueryParams {
+  category?: string;
+  level?: string;
+  kind?: PuzzleKind;
+  status?: QuestionStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface SuggestionQueryParams {
+  status?: SuggestionStatus;
+  page?: number;
+  pageSize?: number;
+}
 
 /** Фильтры админского списка статей. */
 export interface TheoryArticleQueryParams {
@@ -114,7 +145,7 @@ export function useUsers() {
 function useAdminMutation<TArgs, TResult>(
   mutationFn: (args: TArgs) => Promise<TResult>,
   successMessage: string | ((result: TResult) => string),
-  invalidate: "content" | "references" | "users" | "theory",
+  invalidate: "content" | "references" | "users" | "theory" | "engagement",
 ) {
   const queryClient = useQueryClient();
 
@@ -129,6 +160,11 @@ function useAdminMutation<TArgs, TResult>(
       // поэтому проще сбросить всё, чем перечислять затронутые ключи.
       if (invalidate === "users") {
         void queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+      } else if (invalidate === "engagement") {
+        void queryClient.invalidateQueries({ queryKey: ["admin"] });
+        void queryClient.invalidateQueries({ queryKey: ["puzzles"] });
+        void queryClient.invalidateQueries({ queryKey: ["puzzle"] });
+        void queryClient.invalidateQueries({ queryKey: ["facts"] });
       } else if (invalidate === "theory") {
         // Публичное дерево бэкенд сбрасывает сам, но react-query держит
         // своё на час — без явного сброса правка не доедет до сайдбара.
@@ -470,5 +506,124 @@ export function useDeleteTheoryArticle() {
     },
     "Статья удалена",
     "theory",
+  );
+}
+
+export function useAdminPuzzles(params: AdminPuzzleQueryParams = {}) {
+  return useQuery({
+    queryKey: adminKeys.puzzles(params),
+    queryFn: async () =>
+      (
+        await api.get<PagedResult<PuzzleListItem>>("/admin/puzzles", {
+          params: cleanParams(params as AdminQuestionQueryParams),
+        })
+      ).data,
+  });
+}
+
+export function useAdminPuzzle(id: string | undefined) {
+  return useQuery({
+    queryKey: adminKeys.puzzle(id ?? ""),
+    enabled: Boolean(id),
+    queryFn: async () => (await api.get<PuzzleAdmin>(`/admin/puzzles/${id}`)).data,
+  });
+}
+
+export function useCreatePuzzle() {
+  return useAdminMutation(
+    async (input: PuzzleInput) => (await api.post<PuzzleAdmin>("/admin/puzzles", input)).data,
+    "Задача создана",
+    "engagement",
+  );
+}
+
+export function useUpdatePuzzle() {
+  return useAdminMutation(
+    async ({ id, input }: { id: string; input: PuzzleInput }) =>
+      (await api.put<PuzzleAdmin>(`/admin/puzzles/${id}`, input)).data,
+    "Задача сохранена",
+    "engagement",
+  );
+}
+
+export function useDeletePuzzle() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/puzzles/${id}`);
+    },
+    "Задача удалена",
+    "engagement",
+  );
+}
+
+export function useAdminFacts() {
+  return useQuery({
+    queryKey: adminKeys.facts(),
+    queryFn: async () => (await api.get<FactAdmin[]>("/admin/facts")).data,
+  });
+}
+
+export function useCreateFact() {
+  return useAdminMutation(
+    async (input: FactInput) => (await api.post<FactAdmin>("/admin/facts", input)).data,
+    "Факт создан",
+    "engagement",
+  );
+}
+
+export function useUpdateFact() {
+  return useAdminMutation(
+    async ({ id, input }: { id: string; input: FactInput }) =>
+      (await api.put<FactAdmin>(`/admin/facts/${id}`, input)).data,
+    "Факт сохранён",
+    "engagement",
+  );
+}
+
+export function useDeleteFact() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/facts/${id}`);
+    },
+    "Факт удалён",
+    "engagement",
+  );
+}
+
+export function useAdminSuggestions(params: SuggestionQueryParams = {}) {
+  return useQuery({
+    queryKey: adminKeys.suggestions(params),
+    queryFn: async () =>
+      (
+        await api.get<PagedResult<Suggestion>>("/admin/suggestions", {
+          params: cleanParams(params as AdminQuestionQueryParams),
+        })
+      ).data,
+  });
+}
+
+export function useSuggestionCounts() {
+  return useQuery({
+    queryKey: adminKeys.suggestionCounts(),
+    queryFn: async () => (await api.get<SuggestionCounts>("/admin/suggestions/counts")).data,
+  });
+}
+
+export function useUpdateSuggestion() {
+  return useAdminMutation(
+    async ({ id, input }: { id: string; input: SuggestionUpdateInput }) =>
+      (await api.put<Suggestion>(`/admin/suggestions/${id}`, input)).data,
+    "Предложение обновлено",
+    "engagement",
+  );
+}
+
+export function useDeleteSuggestion() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/suggestions/${id}`);
+    },
+    "Предложение удалено",
+    "engagement",
   );
 }

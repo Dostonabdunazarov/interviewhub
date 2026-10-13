@@ -1,4 +1,7 @@
+using InterviewHub.Api.Filters;
 using InterviewHub.Application.Common;
+using InterviewHub.Application.Dtos;
+using InterviewHub.Domain.Enums;
 using InterviewHub.Infrastructure.Services;
 
 namespace InterviewHub.Api.Endpoints;
@@ -6,6 +9,20 @@ namespace InterviewHub.Api.Endpoints;
 /// <summary>Публичное API: доступно гостям без токена, отдаёт только опубликованное.</summary>
 public static class PublicEndpoints
 {
+    public const string SuggestionsRateLimit = "suggestions";
+
+    public static string ClientKey(HttpContext http)
+    {
+        var headers = http.Request.Headers;
+        var cf = headers["CF-Connecting-IP"].ToString();
+        if (!string.IsNullOrWhiteSpace(cf)) return cf.Trim();
+
+        var forwarded = headers["X-Forwarded-For"].ToString();
+        if (!string.IsNullOrWhiteSpace(forwarded)) return forwarded.Split(',')[0].Trim();
+
+        return http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    }
+
     public static void MapPublicEndpoints(this IEndpointRouteBuilder app)
     {
         var api = app.MapGroup("/api").WithTags("Public");
@@ -95,5 +112,39 @@ public static class PublicEndpoints
             var article = await service.GetArticleBySlugAsync(slug, ct);
             return article is null ? Results.NotFound() : Results.Ok(article);
         });
+    
+
+        api.MapGet("/puzzles", async (
+            IPuzzleService service,
+            CancellationToken ct,
+            string? category = null,
+            string? level = null,
+            PuzzleKind? kind = null,
+            int page = 1,
+            int pageSize = 20) =>
+            Results.Ok(await service.SearchAsync(
+                category, level, kind, status: null, publishedOnly: true, page, pageSize, ct)));
+
+        api.MapGet("/puzzles/{slug}", async (
+            string slug, IPuzzleService service, CancellationToken ct) =>
+        {
+            var puzzle = await service.GetBySlugAsync(slug, ct);
+            return puzzle is null ? Results.NotFound() : Results.Ok(puzzle);
+        });
+
+        api.MapGet("/facts", async (
+            IFactService service, CancellationToken ct, string? category = null) =>
+            Results.Ok(await service.GetPublishedAsync(category, ct)));
+
+        api.MapPost("/suggestions", async (
+            SuggestionInput input, ISuggestionService service, CancellationToken ct) =>
+        {
+            if (!string.IsNullOrEmpty(input.Website)) return Results.NoContent();
+
+            await service.SubmitAsync(input, ct);
+            return Results.NoContent();
+        })
+        .Validate<SuggestionInput>()
+        .RequireRateLimiting(SuggestionsRateLimit);
     }
 }

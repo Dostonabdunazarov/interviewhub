@@ -79,6 +79,11 @@ public sealed class CatalogAdminService(AppDbContext db) : ICatalogAdminService
             return OperationResult.Conflict(
                 $"Категория используется в {used} вопросах. Перенесите их в другую категорию.");
 
+        var puzzles = await db.CodePuzzles.CountAsync(p => p.CategoryId == id, ct);
+        if (puzzles > 0)
+            return OperationResult.Conflict(
+                $"Категория используется в {puzzles} задачах. Перенесите их в другую категорию.");
+
         db.Categories.Remove(entity);
         await db.SaveChangesAsync(ct);
         return OperationResult.Success();
@@ -127,6 +132,11 @@ public sealed class CatalogAdminService(AppDbContext db) : ICatalogAdminService
         if (used > 0)
             return OperationResult.Conflict(
                 $"Грейд используется в {used} вопросах. Перенесите их на другой грейд.");
+
+        var puzzles = await db.CodePuzzles.CountAsync(p => p.LevelId == id, ct);
+        if (puzzles > 0)
+            return OperationResult.Conflict(
+                $"Грейд используется в {puzzles} задачах. Перенесите их на другой грейд.");
 
         db.Levels.Remove(entity);
         await db.SaveChangesAsync(ct);

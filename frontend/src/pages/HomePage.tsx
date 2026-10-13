@@ -9,6 +9,7 @@ import { QuestionCardSkeleton, Skeleton } from "../components/ui/Skeleton";
 import { ErrorState } from "../components/ui/States";
 import { formatCount } from "../lib/utils";
 import { Meta } from "../components/Meta";
+import { FactSpotlight } from "../components/FactSpotlight";
 
 function Hero() {
   return (
@@ -261,6 +262,9 @@ export default function HomePage() {
       <StatsRow />
       <Categories />
       <Levels />
+      <section className="mx-auto max-w-content px-page-x pt-section-y">
+        <FactSpotlight />
+      </section>
       <PopularQuestions />
     </>
   );

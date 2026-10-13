@@ -4,6 +4,7 @@ import { useStats } from "../lib/hooks";
 import { Button } from "../components/ui/Button";
 import { formatCount } from "../lib/utils";
 import { Meta } from "../components/Meta";
+import { SuggestButton } from "../components/SuggestDialog";
 
 const FEATURES = [
   {
@@ -57,7 +58,7 @@ export default function AboutPage() {
   const { data } = useStats();
 
   return (
-    <div className="mx-auto max-w-3xl px-page-x py-12">
+    <div className="mx-auto max-w-5xl px-page-x py-12">
       <Meta
         title="О проекте"
         description="InterviewHub — база вопросов с реальных технических собеседований и разобранных ответов к ним."
@@ -134,8 +135,15 @@ export default function AboutPage() {
           деталь, это стоит целого нового вопроса.
         </p>
 
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <SuggestButton variant="primary" />
+          <span className="text-sm text-fg-muted">
+            Форма прямо на сайте — или напишите в Telegram и на почту ниже.
+          </span>
+        </div>
+
         <div className="mt-6 rounded-card border border-border-subtle bg-surface-sunken p-5">
-          <h3 className="text-sm font-medium">Что приложить к письму</h3>
+          <h3 className="text-sm font-medium">Что указать</h3>
           <ul className="mt-3 flex flex-col gap-2">
             {CONTRIBUTION.map((item) => (
               <li key={item} className="flex gap-2.5 text-sm text-fg-muted">

@@ -370,3 +370,137 @@ export interface QuestionQueryParams {
 export interface AdminQuestionQueryParams extends QuestionQueryParams {
   status?: QuestionStatusFilter;
 }
+
+export const PuzzleKind = {
+  Output: 1,
+  Bug: 2,
+} as const;
+export type PuzzleKind = (typeof PuzzleKind)[keyof typeof PuzzleKind];
+
+export const SuggestionKind = {
+  NewQuestion: 1,
+  Correction: 2,
+  Other: 3,
+} as const;
+export type SuggestionKind = (typeof SuggestionKind)[keyof typeof SuggestionKind];
+
+export const SuggestionStatus = {
+  New: 1,
+  Accepted: 2,
+  Rejected: 3,
+} as const;
+export type SuggestionStatus = (typeof SuggestionStatus)[keyof typeof SuggestionStatus];
+
+export interface PuzzleListItem {
+  id: string;
+  slug: string;
+  title: string;
+  kind: PuzzleKind;
+  difficulty: number;
+  status: QuestionStatus;
+  viewCount: number;
+  createdAt: string;
+  category: Ref;
+  level: Ref;
+}
+
+export interface PuzzleOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface PuzzleLink {
+  slug: string;
+  title: string;
+}
+
+export interface PuzzleDetail {
+  id: string;
+  slug: string;
+  title: string;
+  kind: PuzzleKind;
+  body: string;
+  explanation: string;
+  difficulty: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+  category: Ref;
+  level: Ref;
+  options: PuzzleOption[];
+  previous: PuzzleLink | null;
+  next: PuzzleLink | null;
+}
+
+export interface PuzzleQueryParams {
+  category?: string;
+  level?: string;
+  kind?: PuzzleKind;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PuzzleAdmin {
+  id: string;
+  slug: string;
+  title: string;
+  kind: PuzzleKind;
+  body: string;
+  explanation: string;
+  difficulty: number;
+  status: QuestionStatus;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string | null;
+  categoryId: string;
+  levelId: string;
+  options: PuzzleOption[];
+}
+
+export interface Fact {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  category: Ref | null;
+  createdAt: string;
+}
+
+export interface FactAdmin {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  status: QuestionStatus;
+  categoryId: string | null;
+  categoryName: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export type SuggestionTargetType = "question" | "article" | "puzzle" | "fact";
+
+export interface Suggestion {
+  id: string;
+  kind: SuggestionKind;
+  text: string;
+  answerDraft: string | null;
+  category: string | null;
+  level: string | null;
+  company: string | null;
+  round: string | null;
+  contact: string | null;
+  targetType: SuggestionTargetType | null;
+  targetSlug: string | null;
+  status: SuggestionStatus;
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface SuggestionCounts {
+  new: number;
+  accepted: number;
+  rejected: number;
+}

@@ -18,6 +18,10 @@ const ReferencesPage = lazy(() => import("../pages/admin/ReferencesPage"));
 const UsersPage = lazy(() => import("../pages/admin/UsersPage"));
 const AdminTheoryPage = lazy(() => import("../pages/admin/AdminTheoryPage"));
 const TheoryArticleEditorPage = lazy(() => import("../pages/admin/TheoryArticleEditorPage"));
+const AdminPuzzlesPage = lazy(() => import("../pages/admin/AdminPuzzlesPage"));
+const PuzzleEditorPage = lazy(() => import("../pages/admin/PuzzleEditorPage"));
+const AdminFactsPage = lazy(() => import("../pages/admin/AdminFactsPage"));
+const AdminSuggestionsPage = lazy(() => import("../pages/admin/AdminSuggestionsPage"));
 const LoginPage = lazy(() => import("../pages/admin/LoginPage"));
 
 import HomePage from "../pages/HomePage";
@@ -32,6 +36,9 @@ import LevelPage from "../pages/LevelPage";
 import CompaniesPage from "../pages/CompaniesPage";
 import CompanyPage from "../pages/CompanyPage";
 import AboutPage from "../pages/AboutPage";
+import PuzzlesPage from "../pages/PuzzlesPage";
+import PuzzlePage from "../pages/PuzzlePage";
+import FactsPage from "../pages/FactsPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 function Loading() {
@@ -77,6 +84,9 @@ export const router = createBrowserRouter([
           { path: "/levels/:slug", element: <LevelPage /> },
           { path: "/companies", element: <CompaniesPage /> },
           { path: "/companies/:slug", element: <CompanyPage /> },
+          { path: "/puzzles", element: <PuzzlesPage /> },
+          { path: "/puzzles/:slug", element: <PuzzlePage /> },
+          { path: "/facts", element: <FactsPage /> },
           { path: "/about", element: <AboutPage /> },
           { path: "*", element: <NotFoundPage /> },
         ],
@@ -100,6 +110,11 @@ export const router = createBrowserRouter([
               { path: "theory", element: <AdminTheoryPage /> },
               { path: "theory/articles/new", element: <TheoryArticleEditorPage /> },
               { path: "theory/articles/:id", element: <TheoryArticleEditorPage /> },
+              { path: "puzzles", element: <AdminPuzzlesPage /> },
+              { path: "puzzles/new", element: <PuzzleEditorPage /> },
+              { path: "puzzles/:id", element: <PuzzleEditorPage /> },
+              { path: "facts", element: <AdminFactsPage /> },
+              { path: "suggestions", element: <AdminSuggestionsPage /> },
               {
                 // Вложенный ProtectedRoute с requireAdmin: Editor сюда не пройдёт,
                 // как и на /api/admin/users на бэкенде.

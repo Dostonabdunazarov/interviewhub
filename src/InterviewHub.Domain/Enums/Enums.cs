@@ -41,3 +41,23 @@ public enum TheoryStatus
     Published = 2,
     Archived = 3
 }
+
+public enum PuzzleKind
+{
+    Output = 1,
+    Bug = 2
+}
+
+public enum SuggestionKind
+{
+    NewQuestion = 1,
+    Correction = 2,
+    Other = 3
+}
+
+public enum SuggestionStatus
+{
+    New = 1,
+    Accepted = 2,
+    Rejected = 3
+}

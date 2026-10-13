@@ -2,7 +2,16 @@
  * Тела запросов админского API. Соответствуют `Application/Dtos/AdminDtos.cs`.
  * Ответы переиспользуют публичные типы из `./api`.
  */
-import type { InterviewRound, QuestionStatus, TheoryStatus, UserRole } from "./api";
+import type {
+  InterviewRound,
+  PuzzleKind,
+  QuestionStatus,
+  SuggestionKind,
+  SuggestionStatus,
+  SuggestionTargetType,
+  TheoryStatus,
+  UserRole,
+} from "./api";
 
 export interface QuestionCompanyInput {
   companyId: string;
@@ -109,4 +118,49 @@ export interface TheoryArticleInput {
   sectionId: string;
   levelId: string | null;
   questionIds: string[];
+}
+
+export interface PuzzleOptionInput {
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface PuzzleInput {
+  title: string;
+  slug: string | null;
+  kind: PuzzleKind;
+  body: string;
+  explanation: string;
+  difficulty: number;
+  status: QuestionStatus;
+  categoryId: string;
+  levelId: string;
+  options: PuzzleOptionInput[];
+}
+
+export interface FactInput {
+  title: string;
+  slug: string | null;
+  body: string;
+  status: QuestionStatus;
+  categoryId: string | null;
+}
+
+export interface SuggestionInput {
+  kind: SuggestionKind;
+  text: string;
+  answerDraft: string | null;
+  category: string | null;
+  level: string | null;
+  company: string | null;
+  round: string | null;
+  contact: string | null;
+  targetType: SuggestionTargetType | null;
+  targetSlug: string | null;
+  website: string;
+}
+
+export interface SuggestionUpdateInput {
+  status: SuggestionStatus;
+  adminNote: string | null;
 }

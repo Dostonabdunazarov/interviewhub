@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Archive, FileEdit, FilePlus2, FileText, Layers } from "lucide-react";
-import { useAdminQuestions } from "../../lib/adminHooks";
+import { Archive, FileEdit, FilePlus2, FileText, Inbox, Layers } from "lucide-react";
+import { useAdminQuestions, useSuggestionCounts } from "../../lib/adminHooks";
 import { useStats } from "../../lib/hooks";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -103,6 +103,7 @@ export default function DashboardPage() {
   const drafts = useAdminQuestions({ status: "Draft", pageSize: 1 });
   const archived = useAdminQuestions({ status: "Archived", pageSize: 1 });
   const all = useAdminQuestions({ status: "All", pageSize: 1 });
+  const suggestions = useSuggestionCounts();
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,7 +116,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
           icon={FileText}
           label="всего вопросов"
@@ -143,6 +144,13 @@ export default function DashboardPage() {
           value={stats.data?.totalCategories}
           to="/admin/references"
           loading={stats.isLoading}
+        />
+        <StatCard
+          icon={Inbox}
+          label="новых предложений"
+          value={suggestions.data?.new}
+          to="/admin/suggestions"
+          loading={suggestions.isLoading}
         />
       </div>
 
