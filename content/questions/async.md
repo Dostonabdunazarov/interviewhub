@@ -1,6 +1,6 @@
 # Async / Await
 
-Вопросы категории `async` в формате импорта (`tools/questions.md`): 27 шт.
+Вопросы категории `async` в формате импорта (`tools/questions.md`): 32 шт.
 
 ```bash
 node tools/import-questions.mjs --file content/questions/async.md --dry-run
@@ -1434,3 +1434,450 @@ Task<string> ReadAsync()
 - `TaskCompletionSource` без `RunContinuationsAsynchronously` — продолжения ожидающих выполнятся внутри `SetResult` вызывающего.
 
 **Что спрашивают дальше:** как диагностировать thread pool starvation (`dotnet-counters`: длина очереди пула и число потоков, `dotnet-dump` со стеками, заблокированными на `.Result`), и как постепенно переводить синхронную кодовую базу на async без sync-over-async в середине цепочки.
+
+## Почему продолжения TaskCompletionSource выполняются синхронно внутри SetResult и к каким сбоям это приводит?
+
+```yaml
+category: async
+level: senior
+difficulty: 4
+slug: async-pochemu-prodolzheniya-taskcompletionsource-vypolnyayutsya-sinhronno-vnutri-setresu
+tags: async, deadlock, internals
+```
+
+По умолчанию `await` регистрирует продолжение так, что при завершении задачи оно выполняется **прямо в потоке, который вызвал `SetResult`**, если нет `SynchronizationContext`/нестандартного `TaskScheduler`, куда его нужно отправить. Это оптимизация: не нужно ставить работу в очередь пула. Но в итоге `tcs.SetResult(x)` возвращает управление только после того, как чужой код ожидающего метода дойдёт до своего следующего `await` или до конца. Ваш поток временно выполняет чужую логику — со всеми вашими блокировками и состоянием.
+
+**Как это выглядит:**
+
+```csharp
+var tcs = new TaskCompletionSource<int>();
+
+_ = Task.Run(async () =>
+{
+    int v = await tcs.Task;
+    Thread.Sleep(5000);
+    Console.WriteLine($"обработал {v}");
+});
+
+await Task.Delay(100);
+Console.WriteLine("до SetResult");
+tcs.SetResult(42);
+Console.WriteLine("после SetResult");
+```
+
+«после SetResult» напечатается через 5 секунд: весь хвост лямбды выполнился внутри `SetResult`.
+
+**Типичные сбои в продакшене:**
+
+- **Застывший цикл чтения.** RPC-клиент поверх одного соединения: фоновый цикл читает ответы и по correlation id вызывает `pending[id].SetResult(response)`. Если вызывающий код после `await` делает тяжёлую работу, цикл стоит, и **все остальные запросы** на этом соединении ждут. Латентность растёт «у всех сразу», CPU низкий.
+- **Deadlock через блокировку.** `SetResult` вызывается под `lock`, продолжение пытается взять тот же `lock` из другого места — тот же поток реентерабельно войдёт (`Monitor` реентерабелен), и инвариант, который `lock` защищал, окажется нарушен. Если же продолжение синхронно ждёт ответа, который должен прочитать этот же цикл, — классический deadlock.
+- **Рекурсия и переполнение стека.** Цепочка «продолжение завершает следующий TCS, тот — следующий» углубляет стек. Рантайм частично защищается (`RuntimeHelpers.TryEnsureSufficientExecutionStack` — при нехватке стека продолжение уходит в пул), но полагаться на это нельзя.
+- **Исключения не там.** Исключение в продолжении не вылетит из `SetResult` (оно попадёт в задачу ожидающего метода), но время и поток уже потрачены, а трассировка показывает чужой код в вашем стеке.
+
+**Как защищаться:**
+
+```csharp
+var tcs = new TaskCompletionSource<Response>(TaskCreationOptions.RunContinuationsAsynchronously);
+```
+
+С флагом продолжения ставятся в пул, `SetResult` возвращается сразу. Цена — лишний work item и немного латентности, поэтому в сверхгорячих примитивах (каналы, пайпы) это решают осознанно и документируют.
+
+| Ситуация | Нужен `RunContinuationsAsynchronously`? |
+| --- | --- |
+| TCS завершается из цикла чтения/диспетчера/таймера | да |
+| `SetResult` вызывается под блокировкой | да (или вынести вызов за пределы `lock`) |
+| мост к колбэку стороннего API, поток которого вам не принадлежит | да |
+| одноразовый сигнал внутри одного метода, ожидающий — вы сами | можно без него |
+
+**Ловушка с перечислением.** Флаг — из `TaskCreationOptions`. Похожий `TaskContinuationOptions.RunContinuationsAsynchronously` в конструктор не подходит по типу и молча привязывается к перегрузке `TaskCompletionSource(object? state)`: компилируется, но ничего не делает.
+
+```csharp
+new TaskCompletionSource<int>(TaskContinuationOptions.RunContinuationsAsynchronously);
+```
+
+**Другие правила работы с TCS как мостом к колбэкам/событиям:**
+
+- используйте `TrySetResult`/`TrySetException`/`TrySetCanceled`: завершение может прийти из нескольких источников (ответ, таймаут, отмена), повторный `SetResult` бросит `InvalidOperationException`;
+- регистрацию отмены освобождайте, иначе каждый вызов оставляет колбэк в долгоживущем `CancellationToken`;
+- `CancellationTokenSource.Cancel()` тоже выполняет колбэки синхронно — с теми же последствиями;
+- гарантируйте завершение на **всех** путях, включая исключения: забытый TCS — это операция, которая не завершится никогда.
+
+```csharp
+public Task<Response> SendAsync(Request req, CancellationToken ct)
+{
+    var tcs = new TaskCompletionSource<Response>(TaskCreationOptions.RunContinuationsAsynchronously);
+    _pending[req.Id] = tcs;
+
+    var reg = ct.Register(() =>
+    {
+        if (_pending.TryRemove(req.Id, out var t)) t.TrySetCanceled(ct);
+    });
+    tcs.Task.ContinueWith(_ => reg.Dispose(), TaskScheduler.Default);
+
+    _connection.Write(req);
+    return tcs.Task;
+}
+
+private void OnResponse(Response r)
+{
+    if (_pending.TryRemove(r.Id, out var tcs)) tcs.TrySetResult(r);
+}
+```
+
+С .NET 5 есть необобщённый `TaskCompletionSource` — не нужно больше писать `TaskCompletionSource<object>` ради сигнала без значения.
+
+**Что спрашивают дальше:** почему у `Channel<T>` по умолчанию `AllowSynchronousContinuations = false` и когда его включают, как ведёт себя продолжение при наличии `SynchronizationContext`, чем `ContinueWith` с `ExecuteSynchronously` отличается от `await`.
+
+## Как сделать переиспользуемую асинхронную операцию без аллокаций через IValueTaskSource и ManualResetValueTaskSourceCore?
+
+```yaml
+category: async
+level: senior
+difficulty: 5
+slug: async-kak-sdelat-pereispolzuemuyu-asinhronnuyu-operaciyu-bez-allokacii-cherez-ivaluetask
+tags: async, allocations, internals
+```
+
+`ValueTask<T>` может держать не только готовое значение или `Task<T>`, но и `IValueTaskSource<T>` плюс 16-битный токен. Если объект-источник живёт долго и обслуживает операции **по очереди**, асинхронное завершение обходится без аллокации: тот же объект переиспользуется для следующей операции, а токен (версия) отличает текущую операцию от устаревших. Так устроены `Socket.ReceiveAsync`, `PipeReader`, внутренние операции `Channel<T>`. Писать конечный автомат вручную не нужно — с .NET Core 3.0 есть `ManualResetValueTaskSourceCore<T>`, который реализует всю логику продолжений.
+
+**Контракт `IValueTaskSource<T>`:**
+
+| Метод | Что делает |
+| --- | --- |
+| `GetStatus(short token)` | `Pending`, `Succeeded`, `Faulted`, `Canceled` — `await` проверяет, можно ли продолжить синхронно |
+| `OnCompleted(continuation, state, token, flags)` | регистрирует продолжение; флаги говорят, нужно ли захватить `SynchronizationContext`/`ExecutionContext` |
+| `GetResult(short token)` | возвращает результат или бросает исключение; после него источник можно переиспользовать |
+
+**Реализация на `ManualResetValueTaskSourceCore<T>`:**
+
+```csharp
+public sealed class ReusableReceiveOperation : IValueTaskSource<int>
+{
+    private ManualResetValueTaskSourceCore<int> _core;
+    private int _busy;
+
+    public ReusableReceiveOperation() => _core.RunContinuationsAsynchronously = true;
+
+    public ValueTask<int> StartAsync()
+    {
+        if (Interlocked.Exchange(ref _busy, 1) != 0)
+            throw new InvalidOperationException("Предыдущая операция ещё не завершена");
+        return new ValueTask<int>(this, _core.Version);
+    }
+
+    public void Complete(int bytes) => _core.SetResult(bytes);
+    public void Fail(Exception ex) => _core.SetException(ex);
+
+    int IValueTaskSource<int>.GetResult(short token)
+    {
+        bool current = token == _core.Version;
+        try
+        {
+            return _core.GetResult(token);
+        }
+        finally
+        {
+            if (current)
+            {
+                _core.Reset();
+                Volatile.Write(ref _busy, 0);
+            }
+        }
+    }
+
+    ValueTaskSourceStatus IValueTaskSource<int>.GetStatus(short token) => _core.GetStatus(token);
+
+    void IValueTaskSource<int>.OnCompleted(Action<object?> continuation, object? state,
+        short token, ValueTaskSourceOnCompletedFlags flags)
+        => _core.OnCompleted(continuation, state, token, flags);
+}
+```
+
+`Reset()` увеличивает `Version`, поэтому повторный `await` той же `ValueTask` после завершения получит `InvalidOperationException` вместо чужого результата. Защита не абсолютная: версия — `short`, и после 65 536 операций значения повторяются.
+
+**Где здесь подвохи:**
+
+- **Мутабельная структура.** `_core` — изменяемый `struct`; поле не может быть `readonly`, а копия (`var c = _core;`) молча ломает состояние. Передавать только по ссылке.
+- **Одна операция за раз.** Источник обслуживает одну незавершённую операцию. Нужна параллельность — пул источников (как `PoolingAsyncValueTaskMethodBuilder` или `ObjectPool`), а не один объект.
+- **Нарушение контракта потребителем = порча данных.** С обычным `Task` двойной `await` безвреден; здесь второй `await` или `.Result` до завершения может прочитать результат **следующей** операции. Поэтому `ValueTask` из такого API нельзя кэшировать, ожидать дважды и передавать в `WhenAll` без `.AsTask()` (который аллоцирует).
+- **`RunContinuationsAsynchronously`.** По умолчанию `false`: продолжение ожидающего выполнится внутри `SetResult` — в вашем потоке ввода-вывода. Для сокетов/циклов чтения обычно включают `true`.
+- **Сброс в правильный момент.** `Reset()` — только после того, как потребитель забрал результат (`GetResult`). Сброс раньше — потеря результата; забыли сбросить — следующий `SetResult` бросит исключение «уже завершено».
+- **Отмена и таймауты.** Их нужно реализовать самому: регистрация на токен, вызов `SetException(new OperationCanceledException(ct))`, гонка между завершением и отменой — через `Interlocked` на флаге состояния.
+
+**Когда это оправдано:**
+
+| Сценарий | Решение |
+| --- | --- |
+| обычный сервис, запрос к БД/HTTP | `Task<T>`, ничего не изобретать |
+| метод часто завершается синхронно | `ValueTask<T>` с быстрым путём, без `IValueTaskSource` |
+| миллионы операций в секунду на долгоживущем объекте (сетевой протокол, драйвер, очередь) | `IValueTaskSource<T>` + `ManualResetValueTaskSourceCore<T>` |
+| async-метод в горячем пути, который реально уходит в ожидание | сначала попробовать `PoolingAsyncValueTaskMethodBuilder` (.NET 6+) |
+
+Эффект проверяется `BenchmarkDotNet` с `[MemoryDiagnoser]` и под реальной нагрузкой: экономия — один объект на операцию (порядка сотни байт), что заметно только при очень высокой частоте операций.
+
+**Что спрашивают дальше:** как устроен `ValueTask` внутри (поля `_obj`, `_result`, `_token`), почему `AsTask()` на `IValueTaskSource` аллоцирует, как `Channel<T>` переиспользует свои операции ожидания, чем `ManualResetValueTaskSourceCore` отличается от `TaskCompletionSource`.
+
+## Сколько на самом деле стоит async-метод и когда помогают ValueTask, отказ от async и PoolingAsyncValueTaskMethodBuilder?
+
+```yaml
+category: async
+level: senior
+difficulty: 4
+slug: async-skolko-na-samom-dele-stoit-async-metod-i-kogda-pomogayut-valuetask-otkaz-ot-async
+tags: async, performance, allocations
+```
+
+Стоимость async-метода зависит от того, **уходит ли он реально в ожидание**. Если все `await` завершились синхронно, метод почти бесплатен: машина состояний — структура на стеке, а для `Task<T>` аллоцируется только результат (и то не всегда). Если метод приостановился хотя бы раз, в куче появляется один объект — «коробка» с машиной состояний, которая одновременно является возвращаемой задачей (так с .NET Core 2.1). Типичный размер — от ~100 байт плюс все локальные переменные, живущие через `await`. Оптимизировать это имеет смысл только в горячих путях и только после измерения.
+
+**Разбор по сценариям:**
+
+| Сценарий | Аллокации на вызов |
+| --- | --- |
+| `async Task`, завершился синхронно | 0 — используется кэшированный `Task.CompletedTask` |
+| `async Task<T>`, завершился синхронно | `Task<T>` с результатом; кэшированы `bool`, `int` от −1 до 8, `null` и `default` ряда примитивов |
+| `async ValueTask<T>`, завершился синхронно | 0 |
+| любой async-метод, приостановился | 1 объект `AsyncStateMachineBox` (поля машины + `ExecutionContext` + продолжение) |
+| то же с `PoolingAsyncValueTaskMethodBuilder` | обычно 0 в устоявшемся режиме — коробки берутся из пула |
+
+Повторные `await` внутри одного вызова новых коробок не создают: одна и та же переиспользуется. Но каждый **вложенный** async-метод, который тоже приостанавливается, добавляет свою коробку — глубокая цепочка из 6 слоёв (контроллер → сервис → репозиторий → обёртки) даёт 6 объектов на запрос.
+
+**Отказ от `async` (eliding).** Если метод только пробрасывает чужую задачу, машину состояний можно убрать:
+
+```csharp
+public Task<User?> GetAsync(int id, CancellationToken ct) => _inner.GetAsync(id, ct);
+```
+
+Это экономит коробку и кадр стека, но меняет семантику:
+
+- исключения, брошенные до первого `await` во внутреннем методе (валидация аргументов), вылетят **при вызове**, а не при `await`;
+- `using`/`try`/`finally` вокруг `return` выполнятся до завершения операции — ресурс освободится раньше времени;
+- `AsyncLocal`, установленный в таком методе, «утечёт» вызывающему: не-async метод не восстанавливает `ExecutionContext` при выходе;
+- метод исчезает из асинхронного стектрейса.
+
+Правило: eliding — только для тривиальных однострочных обёрток и перегрузок; во всём остальном `async/await` по умолчанию.
+
+**`ValueTask<T>`** помогает, когда большая доля вызовов завершается синхронно: кэш, буферизованное чтение, «данные уже в очереди». Если почти все вызовы реально ждут IO, `ValueTask` ничего не даёт — коробка всё равно будет — и при этом ограничивает потребителей (один `await`, без `WhenAll`).
+
+**`PoolingAsyncValueTaskMethodBuilder` (.NET 6+, C# 10).** Указывается на конкретном методе и заставляет его переиспользовать коробки из пула:
+
+```csharp
+[AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+public async ValueTask<int> ReadFrameAsync(CancellationToken ct)
+{
+    await _reader.FillAsync(ct);
+    return ParseFrame();
+}
+```
+
+Компромиссы:
+
+- работает только для методов, возвращающих `ValueTask`/`ValueTask<T>`, и делает нарушение контракта `ValueTask` (двойной `await`, хранение) опасным — коробка может уже обслуживать другой вызов;
+- пул удерживает память и добавляет синхронизацию: в бенчмарках выигрыш бывает и отрицательным, особенно при малом числе параллельных вызовов;
+- выигрыш заметен при очень высокой частоте приостанавливающихся вызовов и чувствительности к Gen0-сборкам (сетевые протоколы, серверы сообщений). Для типичного веб-API, где на запрос уходят килобайты аллокаций в сериализации и EF, — шум.
+
+В .NET 5 пулинг включался глобально переменной окружения `DOTNET_SYSTEM_THREADING_POOLASYNCVALUETASKS`; в .NET 6 его заменили точечным атрибутом.
+
+**Что ещё стоит денег рядом с async:**
+
+- захват замыканий в async-лямбдах (`items.Select(async x => ...)`) — делегат и класс замыкания на вызов;
+- `CancellationToken.Register` и `CreateLinkedTokenSource` на каждый запрос;
+- `Task.WhenAll` по `IEnumerable` — массив задач и сама объединяющая задача;
+- `ConfigureAwait(false)` аллокаций не экономит — он про контекст, а не про память.
+
+**Как измерять:** `BenchmarkDotNet` с `[MemoryDiagnoser]` для изолированного метода; `dotnet-counters` (скорость аллокаций, число Gen0) под нагрузкой; `dotnet-trace` с профилем `gc-verbose` — если в топе типов `AsyncStateMachineBox<...>` конкретного метода, это кандидат на `ValueTask`/пулинг. Если в топе `byte[]`, `string` и сущности EF, async-накладные расходы не ваша проблема.
+
+**Что спрашивают дальше:** почему в Debug машина состояний — класс, а в Release — структура; как устроен `AsyncStateMachineBox` и почему он наследует `Task<T>`; что изменится, если runtime возьмёт генерацию async-кода на себя вместо компилятора C#.
+
+## Как найти зависшую async-операцию в продакшене, если в стеках потоков её не видно?
+
+```yaml
+category: async
+level: senior
+difficulty: 5
+slug: async-kak-naiti-zavisshuyu-async-operaciyu-v-prodakshene-esli-v-stekah-potokov-ee-ne-vid
+tags: async, incident, profiling
+```
+
+Зависшая async-операция не занимает поток: она существует только как объект в куче — коробка машины состояний, подписанная продолжением на задачу, которая никогда не завершится. Поэтому `clrstack -all` показывает спокойный пул потоков, CPU около нуля, а запросы висят. Искать нужно не по стекам, а **по куче**: снять дамп и восстановить «асинхронные стеки» — цепочки ожидающих друг друга задач — командой `dumpasync` из SOS. Дальше по полю состояния машины видно, на каком `await` она стоит, а по корням — кто должен был её завершить.
+
+**Сначала отличить синхронное зависание от асинхронного:**
+
+| Признак | Блокировка потоков (sync) | Зависшая async-цепочка |
+| --- | --- | --- |
+| CPU | низкий | низкий |
+| число потоков пула | растёт (starvation) | стабильно, потоки простаивают |
+| `threadpool-queue-length` | растёт | около нуля |
+| стеки потоков | `Monitor.Wait`, `Task.Wait`, `GetResult` | пусто, потоки в ожидании работы |
+| другие эндпоинты | тоже деградируют | работают нормально |
+
+**Порядок действий:**
+
+```text
+dotnet-dump collect -p <pid>
+dotnet-dump analyze <dump>
+
+> dumpasync
+> dumpheap -stat -type AsyncStateMachineBox
+> dumpobj <адрес коробки>
+> gcroot <адрес задачи, которую ждут>
+```
+
+- `dumpasync` выводит незавершённые async-операции, сгруппированные в цепочки «кто кого ждёт»: например, `OrdersController.Get` → `OrderService.LoadAsync` → `ResilientClient.SendAsync` → `TaskCompletionSource<Response>.Task`. Нижнее звено — то, что не завершилось.
+- `dumpheap -stat` по типу коробок показывает, **сколько** операций висит в каждом методе. Тысячи коробок одного метода при умеренной нагрузке — утечка зависших операций.
+- В `dumpobj` коробки есть поле `StateMachine`, а в нём `<>1__state` (номер `await`, на котором стоит метод) и поднятые локальные переменные — входные параметры запроса, id заказа, текущий счётчик попыток.
+- `gcroot` показывает, кто держит ожидаемую задачу: словарь `_pending` в клиенте, очередь `SemaphoreSlim`, `Channel`.
+
+В Visual Studio тот же дамп открывается окнами **Parallel Stacks** (режим «Tasks», асинхронные логические стеки) и **Tasks** — удобно, когда дамп можно унести на рабочую машину.
+
+**Неожиданный вариант — операция исчезла.** Если на зависшую задачу (например, TCS) не ссылается ничего, кроме цепочки её же ожидающих, вся цепочка недостижима и собирается GC. В дампе её уже нет, `finally` не выполнились, `using` не освободил ресурсы, а клиент получил таймаут на уровне балансировщика. Поэтому дамп снимают, пока проблема воспроизводится, а не через полчаса.
+
+**Типичные причины, которые находятся этим способом:**
+
+- `TaskCompletionSource`, который не завершается на одном из путей: исключение в обработчике ответа, потерянное соединение без `TrySetException` всем ожидающим;
+- `SemaphoreSlim.Release()` не в `finally` — один сбой, и семафор навсегда «занят»; все последующие `WaitAsync` встают в очередь (видно по `CurrentCount == 0` и длинной цепочке `TaskNode` в объекте семафора);
+- реентерабельный захват async-блокировки из той же логической цепочки — `SemaphoreSlim(1)` ждёт сам себя;
+- `await foreach` по `Channel.Reader.ReadAllAsync()`, а писатель не вызвал `Complete()`;
+- `Task.WhenAll` по задаче без таймаута, которая ждёт внешнюю систему, у которой нет собственного таймаута (свой TCP-протокол, `Stream.ReadAsync` без токена).
+
+**Как сделать такие зависания видимыми заранее:**
+
+- **у каждой внешней операции есть дедлайн:** `CancellationToken` с таймаутом или `WaitAsync(timeout)` на краю системы; бесконечное ожидание — это дефект, а не поведение по умолчанию;
+- **метрика «операций в полёте»:** счётчик `UpDownCounter` или размер словаря ожидающих ответов. Рост без роста нагрузки — ранний сигнал;
+- **трассировка:** незакрытые спаны (`Activity`) в OpenTelemetry показывают, на каком вызове повис запрос, без дампа;
+- **гарантированное завершение примитивов:** `Release` в `finally`, при закрытии соединения — `TrySetException` всем `_pending`, у каналов — `Complete` писателя и в ошибочном пути.
+
+```csharp
+private void OnConnectionLost(Exception ex)
+{
+    foreach (var (id, tcs) in _pending)
+        if (_pending.TryRemove(id, out _))
+            tcs.TrySetException(new IOException("Соединение потеряно", ex));
+}
+```
+
+**Что спрашивают дальше:** чем отличается диагностика starvation от зависшей цепочки, как снять дамп в Kubernetes-поде (`dotnet-monitor` как sidecar, общий том для `/tmp`), почему стектрейсы исключений в async-коде с .NET Core 2.1 читаемы, а «стек» живой операции — нет.
+
+## Как правильно реализовать IAsyncDisposable в типе, который владеет синхронными и асинхронными ресурсами?
+
+```yaml
+category: async
+level: senior
+difficulty: 4
+slug: async-kak-pravilno-realizovat-iasyncdisposable-v-tipe-kotoryi-vladeet-sinhronnymi-i-asin
+tags: async, api-design
+```
+
+`IAsyncDisposable` нужен, когда освобождение само требует ввода-вывода: дописать буфер в поток, отправить «закрытие» по сети, дождаться фонового цикла. Если тип владеет такими ресурсами, он реализует `DisposeAsync` и, как правило, **ещё и `IDisposable`** — потому что не все потребители умеют освобождать асинхронно. Оба пути должны освобождать **всё**, быть идемпотентными и не зависеть друг от друга, а синхронный путь не должен превращаться в sync-over-async.
+
+**Шаблон для наследуемого типа** (так рекомендует документация .NET):
+
+```csharp
+public class MessageSink : IAsyncDisposable, IDisposable
+{
+    private readonly Stream _stream;
+    private readonly StreamWriter _writer;
+    private readonly CancellationTokenSource _cts = new();
+    private readonly Task _pump;
+    private int _disposed;
+
+    public MessageSink(Stream stream, ChannelReader<string> source)
+    {
+        _stream = stream;
+        _writer = new StreamWriter(stream, leaveOpen: true);
+        _pump = PumpAsync(source, _cts.Token);
+    }
+
+    private async Task PumpAsync(ChannelReader<string> source, CancellationToken ct)
+    {
+        await foreach (var line in source.ReadAllAsync(ct).ConfigureAwait(false))
+            await _writer.WriteLineAsync(line).ConfigureAwait(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(disposing: false);
+        GC.SuppressFinalize(this);
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        _cts.Cancel();
+        try { await _pump.ConfigureAwait(false); }
+        catch (OperationCanceledException) { }
+
+        await _writer.DisposeAsync().ConfigureAwait(false);
+        await _stream.DisposeAsync().ConfigureAwait(false);
+        _cts.Dispose();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing) return;
+        _cts.Cancel();
+        _writer.Dispose();
+        _stream.Dispose();
+        _cts.Dispose();
+    }
+}
+```
+
+`DisposeAsync` вызывает `Dispose(false)`, чтобы наследник, освобождающий неуправляемое в `Dispose(bool)`, не потерял это на асинхронном пути; управляемые ресурсы уже освобождены в `DisposeAsyncCore`. Для `sealed`-класса достаточно двух прямых методов без виртуальных — меньше церемоний.
+
+**Ключевые решения:**
+
+- **Синхронный путь не ждёт фоновую задачу через `.Wait()`.** Он отменяет работу и освобождает ресурсы; если нужна гарантия «всё дописано», это возможно только асинхронно — и это стоит задокументировать.
+- **Порядок освобождения — обратный созданию:** сначала остановить производителей (отменить цикл, завершить `Channel.Writer`), дождаться их, затем закрыть то, во что они пишут.
+- **Исключения при освобождении.** `await using` вызывает `DisposeAsync` в `finally`; если упадёт и тело, и `DisposeAsync`, исходное исключение будет **потеряно**. Поэтому `DisposeAsync` не должен бросать из-за ожидаемых ситуаций (отмена, уже закрытое соединение).
+- **Конкурентный вызов.** `Dispose` во время незавершённой операции — частый сценарий при остановке приложения. Флаг через `Interlocked` и проверка `ObjectDisposedException.ThrowIf(_disposed == 1, this)` (.NET 7+) в публичных методах.
+
+**Реальный сбой: синхронный `Dispose` делает синхронный IO.** `StreamWriter.Dispose()` синхронно сбрасывает буфер. В ASP.NET Core синхронные операции с телом ответа запрещены (`AllowSynchronousIO = false`), и код ниже падает с `InvalidOperationException: Synchronous operations are disallowed` — причём **после** того, как основная работа выполнилась:
+
+```csharp
+app.MapGet("/sync-dispose", async (HttpContext context) =>
+{
+    using var writer = new StreamWriter(context.Response.Body);
+    await writer.WriteAsync("payload");
+});
+
+app.MapGet("/async-dispose", async (HttpContext context) =>
+{
+    await using var writer = new StreamWriter(context.Response.Body);
+    await writer.WriteAsync("payload");
+});
+```
+
+Первый эндпоинт падает на выходе из метода, второй работает. То же касается `GZipStream`, `CryptoStream`, `Utf8JsonWriter`.
+
+**`await using` и `ConfigureAwait`.** `ConfigureAwait(false)` на `await using` возвращает обёртку `ConfiguredAsyncDisposable`, поэтому переменная ресурса объявляется отдельно:
+
+```csharp
+var conn = new NpgsqlConnection(cs);
+await using (conn.ConfigureAwait(false))
+{
+    await conn.OpenAsync(ct).ConfigureAwait(false);
+}
+```
+
+В коде приложения (ASP.NET Core) это не нужно — актуально для библиотек.
+
+**Как это использует DI и хост:**
+
+| Ситуация | Что произойдёт |
+| --- | --- |
+| scope освобождается через `DisposeAsync` (`CreateAsyncScope`, скоуп запроса) | вызывается `DisposeAsync`, если реализован, иначе `Dispose` |
+| scope освобождается синхронно, а сервис реализует **только** `IAsyncDisposable` | `InvalidOperationException` |
+| остановка хоста | `RunAsync` освобождает хост асинхронно, singleton'ы получают `DisposeAsync` |
+| объект создан вручную через `new` внутри сервиса | контейнер о нём не знает — освобождать владельцу |
+
+Отсюда практическое правило: тип, который может попасть в синхронно освобождаемый скоуп (старый код, сторонняя библиотека), реализует оба интерфейса.
+
+**Что спрашивают дальше:** зачем `DisposeAsync` возвращает `ValueTask`, а не `Task`; почему `Stream.DisposeAsync` по умолчанию вызывает синхронный `Dispose` и что переопределяют `FileStream` и `StreamWriter`; как корректно остановить `BackgroundService`, который держит `IAsyncDisposable`-ресурсы.

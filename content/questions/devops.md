@@ -1,6 +1,6 @@
 # DevOps и инфраструктура
 
-Вопросы категории `devops` в формате импорта (`tools/questions.md`): 18 шт.
+Вопросы категории `devops` в формате импорта (`tools/questions.md`): 23 шт.
 
 ```bash
 node tools/import-questions.mjs --file content/questions/devops.md --dry-run
@@ -1447,3 +1447,469 @@ export function checkout() {
 **Тестирование в проде** — финальная стадия для зрелых команд: shadow traffic (зеркалирование запросов в новую версию без ответа клиенту), синтетические заказы с пометкой теста, плановые game days. Требует изоляции сайд-эффектов и договорённостей с бизнесом.
 
 **Что спрашивают дальше:** как экстраполировать результаты с уменьшенного окружения (линейно масштабируются только stateless-слои); как определить ёмкость одного пода для настройки HPA; почему средняя latency и даже p99 из отчёта генератора могут врать при coordinated omission.
+
+## Почему HPA по CPU не успевает за всплеском нагрузки и как настроить автомасштабирование .NET-сервиса?
+
+```yaml
+category: devops
+level: senior
+difficulty: 5
+slug: devops-pochemu-hpa-po-cpu-ne-uspevaet-za-vspleskom-nagruzki-i-kak-nastroit-avtomasshtabi
+tags: kubernetes, scalability
+```
+
+HPA — это контур с обратной связью, и в нём складываются задержки: метрика собирается раз в 15 секунд, решение принимается раз в 15 секунд, новый под ещё нужно запланировать, скачать образ, запустить и прогреть. Даже при свободной ноде от начала всплеска до первого запроса в новую реплику проходит 30–90 секунд, а если нужна новая нода — несколько минут. CPU к тому же запаздывающий и косвенный сигнал: для I/O-bound API он растёт позже очереди запросов. Поэтому масштабируются по **опережающей метрике нагрузки** (RPS, concurrency, лаг очереди), держат **запас минимальных реплик**, ускоряют **старт пода** и отдельно решают вопрос **ёмкости нод**.
+
+**Как HPA считает реплики.** Формула одна для всех метрик: `desired = ceil(current * currentMetric / target)`. Для CPU `currentMetric` — это процент от `requests.cpu`, а не от limit и не от ядра. Если метрик несколько, берётся максимум из рассчитанных значений. Отклонение в пределах 10% (tolerance) игнорируется, чтобы не дёргаться.
+
+**Откуда берутся задержки:**
+
+| Этап | Типичное время |
+| --- | --- |
+| metrics-server собирает usage с kubelet | раз в 15 с, значение усреднено за окно |
+| цикл HPA (`--horizontal-pod-autoscaler-sync-period`) | 15 с |
+| планирование и pull образа | 1–20 с, при холодном кэше ноды дольше |
+| старт .NET, прогрев, readiness | 5–30 с |
+| новая нода от cluster autoscaler | 1–4 мин |
+
+**Почему именно CPU подводит:**
+
+- **CPU limit маскирует нагрузку.** Под, упёршийся в limit, троттлится, и его usage не может быть выше `limit / request`. При `limit = request` и цели 80% HPA видит максимум 100% и масштабирует в 1.25 раза за цикл, пока очередь запросов растёт без видимого роста CPU.
+- **I/O-bound сервис.** API ждёт базу и внешние вызовы: latency растёт, ThreadPool и пул соединений забиты, а CPU 30%. HPA ничего не делает.
+- **Новые поды искажают среднее.** На старте .NET тратит CPU на JIT и прогрев. Чтобы это не вызывало каскад, HPA в первые минуты не учитывает CPU неготовых подов (`--horizontal-pod-autoscaler-cpu-initialization-period`, по умолчанию 5 минут), что тоже замедляет реакцию.
+
+**Манифест с метрикой нагрузки и явным поведением:**
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: orders-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orders-api
+  minReplicas: 4
+  maxReplicas: 40
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "150"
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 8
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+```
+
+Метрика `Pods` требует адаптера custom metrics API (Prometheus Adapter) или KEDA. Целевое значение 150 RPS на под берётся из нагрузочного теста: ёмкость одного пода при допустимом p99, минус запас 30–40% на время, пока масштабирование догоняет. Масштабирование вниз специально медленное: окно стабилизации 5 минут (дефолт) и не больше 10% реплик в минуту, иначе после пика HPA срежет поды и на следующей волне начнёт сначала.
+
+**KEDA** удобнее, когда метрика лежит в Prometheus, Kafka или RabbitMQ: она сама создаёт HPA и отдаёт ему внешнюю метрику, а также умеет масштабировать до нуля.
+
+```yaml
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: orders-api
+spec:
+  scaleTargetRef:
+    name: orders-api
+  minReplicaCount: 4
+  maxReplicaCount: 40
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        query: sum(rate(http_server_request_duration_seconds_count{service="orders-api"}[1m]))
+        threshold: "150"
+```
+
+Для консьюмеров очередей правильная метрика — лаг или длина очереди, а не CPU; верхняя граница реплик для Kafka — число партиций.
+
+**Ускорить старт .NET-пода:**
+
+- `PublishReadyToRun` снижает время JIT при старте; Native AOT — ещё сильнее, если приложение его поддерживает;
+- прогрев в фоне до readiness: пулы соединений к БД, `HttpClient`, кэши справочников;
+- образ маленький и закреплён по digest, `imagePullPolicy: IfNotPresent` — pull не повторяется на ноде, где образ уже есть;
+- startup probe с частым опросом, чтобы под становился ready сразу после прогрева, а не через `initialDelaySeconds`.
+
+**Ёмкость нод.** HPA создаёт поды, но если места нет, они висят в `Pending`, пока cluster autoscaler или Karpenter поднимают ноду. Типичное решение — **overprovisioning**: Deployment из «пустых» подов с `PriorityClass` с отрицательным приоритетом резервирует место; при всплеске планировщик вытесняет их ради настоящих подов мгновенно, а ноды под вытесненные заглушки докупаются уже в фоне.
+
+**Подводные камни:**
+
+- HPA и VPA по одной и той же метрике CPU конфликтуют;
+- `minReplicas` слишком низкий ночью — утренний пик каждый раз начинается с холодного старта; для предсказуемых пиков полезно масштабирование по расписанию (KEDA `cron`-триггер);
+- масштабирование API добивает общую зависимость: 40 реплик × пул 50 соединений превышают `max_connections` PostgreSQL;
+- запросы с sidecar искажают CPU пода: с Kubernetes 1.30 метрика `ContainerResource` стабильна и позволяет считать только контейнер приложения.
+
+**Что спрашивают дальше:** как определить ёмкость одного пода; почему при `selectPolicy: Disabled` для scaleDown HPA никогда не уменьшит число реплик; как KEDA и HPA ведут себя при недоступности Prometheus (fallback-реплики в KEDA); чем Karpenter отличается от cluster autoscaler.
+
+## Как сделать так, чтобы сервис в Kubernetes пережил потерю ноды или целой зоны доступности?
+
+```yaml
+category: devops
+level: senior
+difficulty: 4
+slug: devops-kak-sdelat-tak-chtoby-servis-v-kubernetes-perezhil-poteryu-nody-ili-celoi-zony-do
+tags: kubernetes, availability
+```
+
+Нужно три вещи одновременно: **реплики физически разнесены** по нодам и зонам (topology spread constraints, anti-affinity), **оставшимся репликам хватает ёмкости** принять нагрузку упавшей части, а **плановые операции** (drain, обновление нод, сжатие кластера) не выводят из строя слишком много реплик сразу — это работа PodDisruptionBudget. Три реплики Deployment без ограничений легко окажутся на одной ноде, и её потеря станет полным отказом.
+
+**Что происходит при внезапной потере ноды:**
+
+```text
+t=0        нода перестала отвечать
+t≈40–50 с  node controller ставит NotReady, taint unreachable:NoExecute,
+           поды на ней получают Ready=False → убираются из EndpointSlice
+t≈5 мин    истекает tolerationSeconds (300 по умолчанию) → поды вытесняются,
+           Deployment создаёт замену на других нодах
+```
+
+Первые ~45 секунд трафик ещё идёт на мёртвые поды — клиенты должны ретраить идемпотентные запросы. Замена появляется только через 5 минут, поэтому до этого момента сервис живёт на оставшихся репликах. StatefulSet-поды автоматически не пересоздаются, пока нода не удалена из кластера: Kubernetes не может быть уверен, что старый под действительно остановлен, а два пода с одной identity опаснее простоя.
+
+**Распределение по зонам и нодам:**
+
+```yaml
+spec:
+  replicas: 6
+  template:
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: orders-api
+          matchLabelKeys:
+            - pod-template-hash
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: orders-api
+```
+
+- `maxSkew: 1` по зонам — разница в числе подов между зонами не больше одного; `DoNotSchedule` делает это жёстким требованием.
+- По нодам — мягкое `ScheduleAnyway`, иначе при нехватке нод поды застрянут в `Pending`.
+- `matchLabelKeys: [pod-template-hash]` считает перекос отдельно для каждой ревизии ReplicaSet, иначе во время rolling update старые и новые поды смешиваются в подсчёте и новые раскладываются криво.
+- `minDomains` (стабилен с 1.30) заставляет учитывать зоны, где ещё нет нод, — полезно с автоскейлером нод.
+
+Spread соблюдается только **в момент планирования**. После восстановления зоны поды сами не перераспределятся — для этого нужен descheduler или очередной rollout.
+
+**PodDisruptionBudget** ограничивает добровольные вытеснения через Eviction API: `kubectl drain`, обновление нод, удаление нод cluster autoscaler'ом.
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: orders-api
+spec:
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  selector:
+    matchLabels:
+      app: orders-api
+```
+
+| Защищает PDB | Не защищает |
+| --- | --- |
+| drain при обновлении нод | падение ноды, OOM, kernel panic |
+| scale-down нод автоскейлером | удаление пода через `kubectl delete pod` |
+| вытеснение через Eviction API | rolling update Deployment (там `maxUnavailable`/`maxSurge`) |
+
+Ловушки PDB: `maxUnavailable: 0` или `minAvailable` равный числу реплик блокирует drain навсегда, и обновление кластера зависает; при одной реплике PDB тоже бесполезен — либо блокирует, либо не защищает. `unhealthyPodEvictionPolicy: AlwaysAllow` (стабильно с 1.31) разрешает вытеснять уже неготовые поды, чтобы сломанный под в `CrashLoopBackOff` не мешал drain.
+
+**Ёмкость на случай отказа зоны.** При трёх зонах и потере одной оставшиеся две берут всю нагрузку, то есть каждая должна выдерживать 1.5 от своей обычной доли. Варианты: держать запас реплик постоянно (дорого, но мгновенно) или рассчитывать на HPA и автоскейлер нод (дёшево, но минуты деградации — и в момент отказа зоны все клиенты облака одновременно запрашивают ноды в оставшихся зонах). `maxReplicas` у HPA и квоты облака должны это допускать.
+
+**Состояние и зависимости:**
+
+- Блочные тома (EBS, Azure Disk, PD) привязаны к зоне: под со своим PVC не переедет в другую зону. Для StorageClass ставят `volumeBindingMode: WaitForFirstConsumer`, чтобы том создавался в зоне пода, а отказоустойчивость состояния обеспечивают репликацией на уровне БД.
+- Сервис, разнесённый по зонам, но ходящий в базу с единственным primary в одной зоне, переживает потерю зоны только вместе с failover базы.
+- Межзональный трафик платный и добавляет latency; `trafficDistribution: PreferClose` в Service (стабильно с 1.33) предпочитает endpoints в той же зоне, но при перекосе реплик перегружает их.
+
+**Как проверить.** Плановые учения: `kubectl drain` ноды под нагрузкой, затем cordon и drain всех нод одной зоны, глядя на ошибки и latency. Без этого обычно выясняется, что PDB блокирует drain или что все реплики одного критичного сервиса стояли в одной зоне.
+
+**Что спрашивают дальше:** чем topology spread отличается от pod anti-affinity (anti-affinity — «не больше одного на домен», плохо работает при числе реплик больше числа нод); как защищать control plane и etcd; как поведут себя leader election и фоновые задачи при сетевом разделении зоны.
+
+## Почему в Kubernetes появляются задержки и таймауты DNS-резолва и как их устранить?
+
+```yaml
+category: devops
+level: senior
+difficulty: 4
+slug: devops-pochemu-v-kubernetes-poyavlyayutsya-zaderzhki-i-taimauty-dns-rezolva-i-kak-ih-ust
+tags: kubernetes, dns
+```
+
+Две классические причины. Первая — **`ndots:5` и search-домены** в `/etc/resolv.conf` пода: имя внешнего хоста вроде `api.stripe.com` сначала резолвится с каждым search-суффиксом, и на один нужный ответ приходится 6–8 лишних запросов в CoreDNS с NXDOMAIN. Вторая — **гонка в conntrack при UDP**: glibc отправляет A и AAAA запросы параллельно с одного сокета, один пакет теряется на DNAT, и резолв ждёт таймаута — ровно **5 секунд**. Симптом в метриках: редкие запросы с latency 5 с, 10 с и `SocketException` «Resource temporarily unavailable» на фоне нормальной нагрузки.
+
+**Как выглядит resolv.conf пода:**
+
+```text
+nameserver 10.96.0.10
+search orders.svc.cluster.local svc.cluster.local cluster.local eu-west-1.compute.internal
+options ndots:5
+```
+
+Имя с числом точек меньше `ndots` сначала пробуется как относительное:
+
+```text
+api.stripe.com.orders.svc.cluster.local     A, AAAA → NXDOMAIN
+api.stripe.com.svc.cluster.local            A, AAAA → NXDOMAIN
+api.stripe.com.cluster.local                A, AAAA → NXDOMAIN
+api.stripe.com.eu-west-1.compute.internal   A, AAAA → NXDOMAIN
+api.stripe.com                              A, AAAA → ответ
+```
+
+Десять запросов вместо двух. Под нагрузкой это перегружает CoreDNS и увеличивает шанс потери пакета, а каждый NXDOMAIN идёт к upstream, если не закэширован.
+
+**Что с этим делать:**
+
+| Мера | Эффект | Цена |
+| --- | --- | --- |
+| FQDN с точкой в конце (`api.stripe.com.`) | search-домены не применяются | менять конфиги; TLS SNI и `Host` должны быть без точки |
+| `dnsConfig.options ndots: 2` | внешние имена идут сразу как абсолютные | короткие имена вида `svc.ns` продолжают работать, `svc` тоже |
+| NodeLocal DNSCache | кэш на каждой ноде, к CoreDNS по TCP, без conntrack | DaemonSet, ещё один компонент |
+| масштабирование CoreDNS | меньше очереди и потерь | ресурсы; обычно через cluster-proportional-autoscaler |
+| `single-request-reopen` | A и AAAA с разных сокетов, обход гонки | только glibc, в musl (Alpine) не работает |
+
+```yaml
+spec:
+  dnsConfig:
+    options:
+      - name: ndots
+        value: "2"
+      - name: single-request-reopen
+```
+
+**NodeLocal DNSCache** решает обе проблемы: под обращается к локальному IP кэша на своей ноде, этот трафик исключён из conntrack, промахи уходят в CoreDNS по TCP. Плюс снижается нагрузка на CoreDNS и исчезает зависимость от сети между нодами для каждого резолва. В крупных кластерах это стандартная практика.
+
+**Особенности .NET:**
+
+- На Linux `Dns.GetHostAddressesAsync` идёт в системный `getaddrinfo`, собственного DNS-кэша в .NET нет, а в контейнере нет и `nscd`. Каждое новое соединение — новый резолв.
+- `SocketsHttpHandler` держит пул соединений, поэтому резолв происходит только при открытии соединения. `PooledConnectionLifetime` (обычно минуты) нужен, чтобы подхватывать смену IP, но слишком маленькое значение превращает каждый запрос в DNS-запрос.
+- `new HttpClient()` на каждый запрос без пула — это и исчерпание портов, и шторм DNS-запросов.
+- Alpine-образы используют musl, который резолвит иначе: опрашивает nameserver'ы параллельно и не поддерживает часть опций glibc. Chiseled-образы на Ubuntu используют glibc.
+
+**Как диагностировать.** В chiseled и distroless образах нет `dig` и shell, поэтому используется эфемерный контейнер с тем же сетевым namespace:
+
+```bash
+kubectl debug -it orders-api-7d9f8c-x2k4q --image=nicolaka/netshoot --target=api
+dig api.stripe.com
+dig +search api.stripe.com
+cat /etc/resolv.conf
+```
+
+На стороне CoreDNS смотрят метрики `coredns_dns_requests_total`, `coredns_dns_responses_total` с разбивкой по `rcode` (доля NXDOMAIN), `coredns_dns_request_duration_seconds` и `coredns_forward_requests_total`, на нодах — `conntrack -S` (счётчик `insert_failed`) и сообщения `nf_conntrack: table full, dropping packet` в `dmesg`. Если p99 у HTTP-клиента в .NET имеет пики ровно около 5 секунд, а метрика `dns.lookup.duration` (.NET 8+) показывает те же пики, — это DNS.
+
+**Другие источники проблем:**
+
+- CoreDNS-поды на одной ноде или с CPU limit, упирающимся в троттлинг;
+- upstream DNS облака с лимитом пакетов на интерфейс (у AWS — ограничение числа DNS-запросов на ENI в секунду);
+- поды с `hostNetwork: true` без `dnsPolicy: ClusterFirstWithHostNet` не видят кластерный DNS;
+- кэширование отрицательных ответов: сервис создан, но клиент ещё 30 секунд получает NXDOMAIN из кэша CoreDNS.
+
+**Что спрашивают дальше:** как работает headless Service и почему клиентская балансировка gRPC зависит от TTL записей; что делает плагин `autopath` в CoreDNS; почему conntrack-гонка затрагивает и kube-proxy в режиме IPVS.
+
+## Как защитить цепочку поставки образов от зависимостей до запуска в кластере?
+
+```yaml
+category: devops
+level: senior
+difficulty: 4
+slug: devops-kak-zaschitit-cepochku-postavki-obrazov-ot-zavisimostei-do-zapuska-v-klastere
+tags: security, docker, cicd
+```
+
+Цель — чтобы в кластере запускался только тот код, который собрал ваш CI из вашего репозитория, из проверенных зависимостей, и чтобы это можно было доказать. На практике это четыре слоя: **контроль входа** (закреплённые версии пакетов и базовых образов, доверенные источники), **сканирование и SBOM** (знаем, что внутри, и узнаём о новых CVE), **подпись и provenance** (образ собран конкретным пайплайном), **политика допуска** в кластере (неподписанное или не прошедшее проверку не запускается).
+
+**Слой 1: зависимости NuGet.**
+
+- **Lock-файл.** `RestorePackagesWithLockFile=true` создаёт `packages.lock.json`, а `dotnet restore --locked-mode` в CI падает, если граф зависимостей изменился без коммита lock-файла.
+- **Package Source Mapping** в `nuget.config`: внутренние пакеты (`Acme.*`) берутся только из внутреннего фида, остальные — только из nuget.org. Это закрывает dependency confusion, когда злоумышленник публикует пакет с внутренним именем и большей версией в публичный фид.
+- **NuGetAudit**: начиная с .NET 8 SDK restore предупреждает об известных уязвимостях, в .NET 9 по умолчанию проверяются и транзитивные пакеты (`NuGetAuditMode=all`). Для CI предупреждения уровня high/critical переводят в ошибки.
+
+```xml
+<packageSourceMapping>
+  <packageSource key="nuget.org">
+    <package pattern="*" />
+  </packageSource>
+  <packageSource key="acme">
+    <package pattern="Acme.*" />
+  </packageSource>
+</packageSourceMapping>
+```
+
+**Слой 2: базовый образ.** Тег `aspnet:10.0` подвижный: сегодня и завтра это разные байты. Базу закрепляют по digest, а обновления digest приходят автоматическими PR от Renovate или Dependabot — так патчи безопасности попадают быстро, но через review и тесты.
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled@sha256:<digest>
+```
+
+Chiseled/distroless база убирает shell и пакетный менеджер: меньше CVE в отчёте сканера и меньше инструментов у атакующего внутри контейнера.
+
+**Слой 3: SBOM, сканирование, подпись.** Пайплайн после сборки:
+
+```bash
+docker buildx build --sbom=true --provenance=mode=max -t registry.example.com/orders-api:$GIT_SHA --push .
+trivy image --severity HIGH,CRITICAL --exit-code 1 registry.example.com/orders-api@$DIGEST
+syft registry.example.com/orders-api@$DIGEST -o cyclonedx-json > sbom.json
+cosign sign --yes registry.example.com/orders-api@$DIGEST
+cosign attest --yes --type cyclonedx --predicate sbom.json registry.example.com/orders-api@$DIGEST
+```
+
+- **SBOM** (CycloneDX или SPDX) — перечень всех компонентов образа. Он нужен не для галочки, а чтобы при новой уязвимости за минуты ответить, какие развёрнутые сервисы её содержат.
+- **Сканирование только при сборке недостаточно.** CVE публикуются после релиза; образы, работающие в проде, пересканируют регулярно (Trivy Operator, сканер registry).
+- **Подпись cosign в keyless-режиме**: CI получает OIDC-токен (GitHub Actions, GitLab), Fulcio выдаёт короткоживущий сертификат на identity пайплайна, запись попадает в прозрачный журнал Rekor. Ключей, которые можно украсть, нет. Подписывается **digest**, а не тег.
+- **Provenance (SLSA)** — аттестация, где и из какого коммита собран образ. Позволяет запретить образы, собранные на ноутбуке разработчика, даже если у него есть доступ к registry.
+
+**Слой 4: политика допуска в кластере.** Kyverno, Sigstore policy-controller или Gatekeeper с внешними данными проверяют подпись при создании пода:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-images
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: verify-signature
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "registry.example.com/*"
+          mutateDigest: true
+          attestors:
+            - entries:
+                - keyless:
+                    issuer: https://token.actions.githubusercontent.com
+                    subject: "https://github.com/acme/orders/.github/workflows/release.yml@refs/heads/main"
+```
+
+`mutateDigest` переписывает тег на digest в спецификации пода — то, что проверили, и запустится. Встроенная `ValidatingAdmissionPolicy` (стабильна с 1.30) на CEL не умеет проверять криптографические подписи, она подходит для правил вида «запрещён тег `latest`» и «только наш registry».
+
+**Защита самого CI** — часть цепочки:
+
+| Риск | Мера |
+| --- | --- |
+| подменённый сторонний action | закреплять actions по SHA коммита, а не по тегу |
+| утечка долгоживущих ключей облака и registry | OIDC federation вместо секретов в CI |
+| заражённый раннер между сборками | эфемерные раннеры, сборка без привилегий |
+| сборка из непроверенного кода | protected branches, обязательный review, подпись только с main |
+
+**Runtime-ограничения** снижают ущерб, если что-то всё же проскочило: `runAsNonRoot`, `readOnlyRootFilesystem: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, Pod Security Admission в режиме `restricted` для namespace.
+
+**Подводные камни:** политика в `Enforce` без исключений для системных образов (ingress, CNI, мониторинг) ломает кластер — включают сначала в `Audit`; webhook допуска становится зависимостью control plane, и его недоступность при `failurePolicy: Fail` блокирует создание любых подов; сканер со 400 low-находками без триажа приучает игнорировать отчёты.
+
+**Что спрашивают дальше:** как действовать при критической CVE в базовом образе (найти затронутые сервисы по SBOM, пересобрать, раскатить); что такое уровни SLSA; чем VEX помогает отсеять неприменимые уязвимости.
+
+## Как внедрить feature flags, чтобы отделить деплой от релиза и не накопить технический долг?
+
+```yaml
+category: devops
+level: senior
+difficulty: 4
+slug: devops-kak-vnedrit-feature-flags-chtoby-otdelit-deploi-ot-reliza-i-ne-nakopit-tehnichesk
+tags: deployment, strategy
+```
+
+Feature flag превращает включение функции из деплоя в изменение конфигурации: код раскатывается выключенным, включается для внутренних пользователей, потом для процента трафика, а при проблеме выключается за секунды без отката. Цена — ветвления в коде, комбинации состояний для тестирования и флаги, которые никто не удаляет. Работает это только при дисциплине: **у каждого флага есть тип, владелец и срок жизни, оценка локальная и быстрая, значение по умолчанию безопасное, а удаление — часть задачи**.
+
+**Типы флагов живут по-разному:**
+
+| Тип | Пример | Срок жизни | Кто переключает |
+| --- | --- | --- | --- |
+| release | новый чекаут | дни–недели, до 100% и удаления | команда |
+| experiment | A/B вариант цены | длительность эксперимента | продукт |
+| ops / kill switch | отключить рекомендации под нагрузкой | постоянно | дежурный |
+| permission | функция тарифа Enterprise | постоянно | бизнес-логика |
+
+Смешение типов — частая проблема: release-флаг «временно» оставляют навсегда как kill switch, и через год никто не знает, можно ли его удалить.
+
+**Реализация в .NET.** `Microsoft.FeatureManagement` даёт флаги поверх `IConfiguration` с фильтрами (процент, временное окно, таргетинг):
+
+```json
+"FeatureManagement": {
+  "NewCheckout": {
+    "EnabledFor": [
+      {
+        "Name": "Microsoft.Targeting",
+        "Parameters": {
+          "Audience": {
+            "Users": [ "qa@acme.io" ],
+            "Groups": [ { "Name": "employees", "RolloutPercentage": 100 } ],
+            "DefaultRolloutPercentage": 5
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+```csharp
+builder.Services.AddFeatureManagement()
+    .WithTargeting<HttpContextTargetingContextAccessor>();
+
+app.MapPost("/checkout", async (IFeatureManagerSnapshot features, CheckoutRequest req) =>
+    await features.IsEnabledAsync("NewCheckout")
+        ? await NewCheckout.Handle(req)
+        : await LegacyCheckout.Handle(req));
+```
+
+Процент считается по хэшу пользователя, поэтому один пользователь стабильно видит один вариант, а не прыгает между ними от запроса к запросу. `IFeatureManagerSnapshot` фиксирует значение на время запроса, чтобы флаг не переключился посреди обработки. Для смены значений без рестарта конфигурацию берут из источника с обновлением (Azure App Configuration, Consul) или используют внешнюю платформу (Unleash, LaunchDarkly, flagd) через вендор-нейтральный SDK **OpenFeature**.
+
+**Требования к самой системе флагов:**
+
+- **Оценка локальная.** SDK держит правила в памяти и получает обновления стримингом или поллингом. Сетевой вызов на каждую проверку флага — это latency и новая точка отказа на горячем пути.
+- **Безопасный default.** Если сервис флагов недоступен при старте, используется значение по умолчанию из кода — для release-флага это «выключено».
+- **Аудит и права.** Переключение флага в проде — это изменение продакшена: кто, когда, с какого на какое значение, с уведомлением в канал инцидентов. Kill switch должен быть доступен дежурному без деплоя.
+- **Наблюдаемость.** Значение флага пишется атрибутом в трассировку и логи (в OpenTelemetry для этого есть семантические соглашения `feature_flag.*`). Иначе при всплеске ошибок не видно, что падает только вариант с новым кодом.
+
+**Что флаг не решает:**
+
+- **Миграции БД.** Флаг не откатывает схему: новый код за флагом всё равно требует expand/contract, и старый путь должен работать с новой схемой.
+- **Согласованность между сервисами.** Два сервиса получают обновление флага с разницей в секунды и на одном запросе могут принять разные решения. Если это важно, решение принимается один раз на входе и передаётся дальше (заголовок, baggage).
+- **Изменение контрактов.** Новое поле в событии, которое уже ушло в Kafka, флагом не отзывается.
+
+**Тестирование.** Все комбинации N флагов проверить нельзя (2^N). Практика: тесты гоняют для текущего прод-состояния и для следующего планируемого (флаг включён), флаги в коде по возможности независимы и не вложены друг в друга, а в тестах значения задаются явно, а не читаются из общего окружения.
+
+**Технический долг флагов.** Каждый флаг — это две ветки кода, которые нужно поддерживать. Меры:
+
+- при создании release-флага сразу заводится задача на удаление с датой;
+- реестр флагов с владельцем и типом; линтер или проверка в CI находит флаги старше срока;
+- метрика оценок: флаг две недели на 100% везде — кандидат на удаление, флаг без оценок — мёртвый код;
+- имена флагов никогда не переиспользуются.
+
+Последний пункт — не формальность. В 2012 году Knight Capital при деплое переиспользовал старый флаг, который на одном сервере, куда не доехал новый код, включил давно мёртвую логику торговли. За 45 минут компания потеряла около 440 млн долларов.
+
+**Что спрашивают дальше:** чем progressive delivery через флаги отличается от canary на уровне инфраструктуры и когда нужны оба; как проводить A/B-эксперимент со статистической значимостью; как кэшировать ответы, зависящие от флага (флаг должен входить в ключ кэша).

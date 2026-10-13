@@ -1,6 +1,6 @@
 # EF Core / Dapper / ORM
 
-Вопросы категории `ef-core` в формате импорта (`tools/questions.md`): 40 шт.
+Вопросы категории `ef-core` в формате импорта (`tools/questions.md`): 45 шт.
 
 ```bash
 node tools/import-questions.mjs --file content/questions/ef-core.md --dry-run
@@ -2493,3 +2493,441 @@ LIMIT @p
 **Шаг 4. Оптимизации на стороне приложения** — когда SQL уже хорош, а CPU и аллокации заметны: `AddDbContextPool`, compiled queries для горячих запросов, стриминг через `AsAsyncEnumerable()` вместо `ToListAsync()` для больших выборок, `SqlQuery<T>`/`FromSql` или Dapper для запросов, которые LINQ переводит неоптимально.
 
 **Подводные камни:** оптимизируйте по плану на данных продакшен-объёма — на десяти строках в dev любой запрос быстрый; после изменения проверьте, что ускорение подтверждается метриками, а не ощущениями; не включайте `EnableSensitiveDataLogging` в продакшене.
+
+## Как выбрать между single query и split query при загрузке нескольких коллекций и чем рискует `AsSplitQuery()`?
+
+```yaml
+category: ef-core
+level: senior
+difficulty: 4
+slug: ef-core-kak-vybrat-mezhdu-single-query-i-split-query-pri-zagruzke-neskolkih-kollekcii-i
+tags: performance, orm, transactions
+```
+
+По умолчанию (с EF Core 3.0) весь граф с `Include` грузится **одним** SQL-запросом через `LEFT JOIN`. Если в графе две и больше коллекции одного уровня, строки перемножаются: получается cartesian explosion. `AsSplitQuery()` (EF Core 5) разбивает загрузку на отдельный `SELECT` для корня и для каждой коллекции. Строк и трафика становится меньше, но split query **не атомарен**: запросы видят базу в разные моменты времени. Кроме того, он добавляет round-trip-ы, буферизует результаты и повторяет фильтр корня в каждом запросе.
+
+**Откуда берётся взрыв.**
+
+```csharp
+var blogs = await db.Blogs
+    .Where(b => b.OwnerId == ownerId)
+    .Include(b => b.Posts)
+    .Include(b => b.Contributors)
+    .ToListAsync(ct);
+```
+
+```sql
+SELECT b.id, b.name, b.description, p.id, p.blog_id, p.title, c.id, c.blog_id, c.name
+FROM blogs AS b
+LEFT JOIN posts AS p ON b.id = p.blog_id
+LEFT JOIN contributors AS c ON b.id = c.blog_id
+WHERE b.owner_id = @ownerId
+ORDER BY b.id, p.id
+```
+
+У блога с 200 постами и 30 авторами получается 6000 строк вместо 231, и в каждой повторяется широкая колонка `description`. При материализации EF выбросит дубли по ключам, но база уже отсортировала эти строки, сеть их передала, а клиент разобрал. Если добавить третью коллекцию, строк станет ещё в разы больше. Начиная с EF Core 5, на нескольких коллекциях без явного выбора режима EF пишет в лог предупреждение `RelationalEventId.MultipleCollectionIncludeWarning`.
+
+**Что делает split query.**
+
+```sql
+SELECT b.id, b.name, b.description FROM blogs AS b
+WHERE b.owner_id = @ownerId ORDER BY b.id;
+
+SELECT p.id, p.blog_id, p.title, b.id FROM blogs AS b
+INNER JOIN posts AS p ON b.id = p.blog_id
+WHERE b.owner_id = @ownerId ORDER BY b.id;
+
+SELECT c.id, c.blog_id, c.name, b.id FROM blogs AS b
+INNER JOIN contributors AS c ON b.id = c.blog_id
+WHERE b.owner_id = @ownerId ORDER BY b.id;
+```
+
+Каждая коллекция приходит отдельным потоком строк, отсортированным по ключу корня. EF «сшивает» потоки, проходя их параллельно.
+
+**Чем рискует split query.**
+
+- **Консистентность.** В PostgreSQL по умолчанию действует `Read Committed`, где каждый оператор получает свой снимок данных. Если между первым и вторым `SELECT` кто-то добавил пост или удалил блог, граф соберётся из разных моментов времени: например, у блога будет `PostCount = 3`, а в коллекции 4 поста. Если нужна согласованность, запросы оборачивают в транзакцию `RepeatableRead`: в PostgreSQL это один снимок на всю транзакцию.
+- **Пагинация.** `Skip`/`Take` повторяются в каждом запросе. Если порядок неуникален (`OrderBy(b => b.CreatedAt)` с одинаковыми датами), разные запросы выберут разные «страницы» корней, и коллекции пристанут не к тем блогам или окажутся пустыми. Порядок должен быть полностью детерминированным: `.OrderBy(b => b.CreatedAt).ThenBy(b => b.Id)`.
+- **Повтор фильтра.** Тяжёлый `WHERE` корня (полнотекстовый поиск, подзапросы) выполняется N+1 раз, по разу на каждый запрос.
+- **Round-trip-ы.** На каждую коллекцию приходится отдельный сетевой обмен. Если база в другой зоне с задержкой 2–5 мс, на маленьких графах split query медленнее single query.
+- **Буферизация.** В Npgsql на соединении одновременно может читаться только один результат: аналога MARS из SQL Server нет. Поэтому результаты предыдущих запросов EF держит в памяти, пока выполняет следующие, и стриминг через `AsAsyncEnumerable()` полного выигрыша не даёт.
+
+**Как выбирать.**
+
+| Ситуация | Режим |
+| --- | --- |
+| одна коллекция или только reference-навигации | single: взрыва нет |
+| несколько коллекций, каждая заметного размера | split |
+| широкие колонки корня (`text`, `jsonb`) и большие коллекции | split |
+| нужен согласованный срез данных | single или split в транзакции `RepeatableRead` |
+| удалённая база с высокой задержкой, маленькие графы | single |
+| нужна часть полей или агрегаты | ни то, ни другое: проекция `Select` |
+
+Режим задают глобально, а в конкретных запросах переопределяют:
+
+```csharp
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(cs, npgsql =>
+    npgsql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+
+var order = await db.Orders
+    .Include(o => o.Lines)
+    .AsSingleQuery()
+    .FirstAsync(o => o.Id == id, ct);
+```
+
+Согласованный split query:
+
+```csharp
+await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, ct);
+var blogs = await db.Blogs.Include(b => b.Posts).Include(b => b.Contributors)
+    .AsSplitQuery().ToListAsync(ct);
+await tx.CommitAsync(ct);
+```
+
+**Альтернативы обоим режимам.** Split query работает и для проекций с вложенными коллекциями (`Select(b => new { b.Name, Posts = b.Posts.Select(...) })`), а проекция сама по себе часто снимает проблему. Можно загрузить корни, а затем коллекции явным запросом `Where(p => blogIds.Contains(p.BlogId))`: это тот же split, но под вашим контролем. Для отчётных графов в PostgreSQL иногда выгоднее собрать JSON на стороне базы (`json_agg`) через `SqlQuery`.
+
+**Что спрашивают дальше:** почему EF Core 3.0 отказался от автоматического разбиения запросов, которое было в 2.x; как EF «сшивает» результаты split query без MARS; как поведёт себя filtered include в split-режиме; какой уровень изоляции нужен в PostgreSQL, чтобы несколько `SELECT` видели один снимок.
+
+## Как EF Core кэширует трансляцию LINQ-запросов и почему константы и `Contains` со списком могут засорить кэш?
+
+```yaml
+category: ef-core
+level: senior
+difficulty: 5
+slug: ef-core-kak-ef-core-keshiruet-translyaciyu-linq-zaprosov-i-pochemu-konstanty-i-contains
+tags: performance, caching, query-planning
+```
+
+Трансляция LINQ в SQL дорогая: навигации разворачиваются, выражение переводится в SQL-дерево, генерируется текст запроса, компилируется shaper. Поэтому EF Core кэширует результат по **структуре** дерева выражений. Значения захваченных переменных при этом становятся параметрами и в ключ кэша не входят. Литералы и `Expression.Constant` входят в структуру. Если такие значения меняются от вызова к вызову, каждый вызов даёт новую запись в кэше, новую компиляцию и новый текст SQL. В итоге растут CPU и память приложения, а на стороне базы множатся prepared statements и записи в `pg_stat_statements`.
+
+**Как устроен конвейер.**
+
+1. **Извлечение параметров.** EF обходит дерево и вычисляет всё, что не зависит от строк базы: замыкания, обращения к полям, вызовы методов. Результаты становятся параметрами (`@id`), а в дереве остаётся узел-параметр.
+2. **Поиск в compiled query cache.** Ключ кэша — структурное сравнение дерева плюс часть настроек (tracking, режим split и т. п.). При промахе выполняется полная компиляция, обычно от сотен микросекунд до единиц миллисекунд на сложный запрос.
+3. **Генерация SQL с учётом значений.** Часть SQL зависит от значений параметров: `x.Name == name` при `name == null` превращается в `IS NULL`. Поэтому EF дополнительно кэширует готовую команду по признаку «какие параметры равны null».
+
+Кэш живёт внутри сервис-провайдера EF и ограничен по размеру. При постоянном потоке уникальных запросов записи вытесняются, и даже нормальные запросы начинают перекомпилироваться.
+
+**Литерал против переменной.**
+
+```csharp
+await db.Orders.Where(o => o.Status == "new").ToListAsync(ct);
+
+var customerId = request.CustomerId;
+await db.Orders.Where(o => o.CustomerId == customerId).ToListAsync(ct);
+```
+
+```sql
+WHERE o.status = 'new'
+WHERE o.customer_id = @customerId
+```
+
+Литерал `'new'` — нормальное поведение: значение фиксировано, запись в кэше одна, планировщик видит конкретное значение. Проблемы начинаются, когда «литерал» на самом деле меняется.
+
+**Типичный источник засорения — динамически собранные выражения.**
+
+```csharp
+var o = Expression.Parameter(typeof(Order), "o");
+var bad = Expression.Lambda<Func<Order, bool>>(
+    Expression.Equal(Expression.Property(o, nameof(Order.CustomerId)), Expression.Constant(customerId)), o);
+
+var holder = new { customerId };
+var good = Expression.Lambda<Func<Order, bool>>(
+    Expression.Equal(
+        Expression.Property(o, nameof(Order.CustomerId)),
+        Expression.Property(Expression.Constant(holder), nameof(holder.customerId))), o);
+```
+
+`bad` даёт по записи в кэше на каждого клиента. В `good` значение достаётся через обращение к члену константы-объекта, как в компиляторном замыкании, и EF превращает его в параметр. Самый простой вариант — строить фильтры композицией обычных лямбд: `query.Where(x => x.CustomerId == customerId)`. Комбинации необязательных фильтров дают разные формы запроса, но их число ограничено, и это нормально.
+
+**`Contains` со списком.**
+
+| Версия / провайдер | `ids.Contains(o.Id)` транслируется в | Последствие |
+| --- | --- | --- |
+| EF Core ≤ 7, SQL Server | `IN (1, 2, 3)` с инлайн-значениями | новый SQL на каждый набор, засорение plan cache SQL Server, SQL генерируется заново при каждом выполнении |
+| EF Core 8+, SQL Server | `IN (SELECT value FROM OPENJSON(@ids))` | один текст запроса, но у планировщика хуже оценка кардинальности |
+| Npgsql | `o.id = ANY (@ids)` с параметром-массивом | один текст запроса, массив передаётся одним параметром |
+
+В EF Core 8 появились primitive collections: коллекции примитивов стали полноценными параметрами, и по ним можно строить запросы. У Npgsql для этого есть нативные массивы PostgreSQL. Если план с параметром хуже, чем с конкретными значениями, инлайн можно вернуть точечно через `EF.Constant(ids)` (EF Core 8) или глобально через `TranslateParameterizedCollectionsToConstants()` (EF Core 9). Обратная операция, `EF.Parameter(x)` (EF Core 9), заставляет параметризовать даже константу.
+
+```csharp
+var orders = await db.Orders.Where(o => ids.Contains(o.Id)).ToListAsync(ct);
+```
+
+```sql
+SELECT o.id, o.status FROM orders AS o WHERE o.id = ANY (@ids)
+```
+
+**Что происходит на стороне PostgreSQL.** Когда SQL-текст один, Npgsql с `Max Auto Prepare` подготавливает его один раз. После пяти выполнений PostgreSQL может перейти на generic-план, а для `= ANY(@ids)` в нём размер массива неизвестен. Если размер списка сильно разный (от 3 до 30 000 элементов), один план не подходит обоим случаям. Огромные списки лучше передать через временную таблицу или `JOIN unnest(@ids)` и не превращать запрос в гигантский `IN`. Разные тексты, наоборот, вытесняют друг друга из лимита auto-prepare.
+
+**Другие источники уникальных запросов:**
+
+- `FromSqlRaw($"... where id = {id}")` — новый SQL на каждое значение плюс SQL-инъекция. Правильно: `FromSql($"... where id = {id}")`, который параметризует интерполяцию.
+- `Take(pageSize)`, где `pageSize` — константа из разных мест кода. Это безвредно, пока вариантов мало.
+- Создание нового `ServiceProvider` для EF на каждый контекст (например, `UseInternalServiceProvider` с новым провайдером, разные `ReplaceService`): кэш пустой при каждом создании. EF предупреждает об этом `CoreEventId.ManyServiceProvidersCreatedWarning`.
+
+**Как обнаружить.** `dotnet-counters monitor Microsoft.EntityFrameworkCore` показывает `Query Cache Hit Rate` (EF Core 6+): на прогретом сервисе он должен быть близок к 100%. Событие `CoreEventId.QueryCompilationStarting` на уровне `Debug` пишется при каждой компиляции. В `pg_stat_statements` подозрительным будет множество почти одинаковых запросов с малым `calls`.
+
+**Что спрашивают дальше:** чем compiled query (`EF.CompileAsyncQuery`) отличается от обычного кэша и когда он даёт выигрыш; почему generic-план для `= ANY(@ids)` может быть хуже custom-плана и как на это влияет `plan_cache_mode`; как построить динамический фильтр без потерь кэша.
+
+## Что обходят `ExecuteUpdate` и `ExecuteDelete` и как совмещать их с отслеживаемыми сущностями?
+
+```yaml
+category: ef-core
+level: senior
+difficulty: 4
+slug: ef-core-chto-obhodyat-executeupdate-i-executedelete-i-kak-sovmeschat-ih-s-otslezhivaemym
+tags: orm, concurrency, transactions
+```
+
+`ExecuteUpdateAsync` и `ExecuteDeleteAsync` (EF Core 7) транслируют LINQ-запрос в один `UPDATE`/`DELETE` и сразу его выполняют. Сущности не загружаются, change tracker не участвует, `SaveChanges` не вызывается. Отсюда скорость, но и всё, что обычно делает `SaveChanges`, здесь пропускается: перехватчики сохранения, проверка concurrency token, каскады на клиенте, аудит, доменные события. Уже загруженные в контекст сущности остаются со старыми значениями.
+
+```csharp
+var affected = await db.Orders
+    .Where(o => o.Status == OrderStatus.New && o.CreatedAt < cutoff)
+    .ExecuteUpdateAsync(s => s
+        .SetProperty(o => o.Status, OrderStatus.Expired)
+        .SetProperty(o => o.UpdatedAt, DateTime.UtcNow), ct);
+```
+
+```sql
+UPDATE orders AS o
+SET status = 3, updated_at = @p
+WHERE o.status = 0 AND o.created_at < @cutoff
+```
+
+**Что именно обходится.**
+
+| Механизм | `SaveChanges` | `ExecuteUpdate` / `ExecuteDelete` |
+| --- | --- | --- |
+| change tracker, состояния сущностей | да | нет, загруженные сущности не обновляются |
+| `SaveChangesInterceptor`, события `SavingChanges` | да | нет |
+| `DbCommandInterceptor` | да | да: это обычная команда |
+| concurrency token | проверяется автоматически | нет, условие пишется вручную |
+| каскадное удаление на клиенте | да, для загруженных зависимых | нет, работает только `ON DELETE` в базе |
+| global query filters | — | да, применяются к `WHERE` |
+| общая транзакция с другими изменениями | неявная транзакция на один `SaveChanges` | своя команда, выполняется немедленно |
+
+Аудит, soft delete через перехватчик, проставление `UpdatedAt`, outbox и доменные события, построенные на `SaveChanges`, при массовых операциях молча не срабатывают. Если soft delete сделан перехватчиком, переводящим `Deleted` в `Modified`, то `ExecuteDeleteAsync` удалит строки физически. Обратная сторона фильтров: из-за soft-delete фильтра `ExecuteUpdate` не тронет удалённые строки, пока не вызван `IgnoreQueryFilters()`.
+
+**Устаревшие сущности в трекере.**
+
+```csharp
+var order = await db.Orders.FirstAsync(o => o.Id == id, ct);
+
+await db.Orders.Where(o => o.Id == id)
+    .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, OrderStatus.Cancelled), ct);
+
+var again = await db.Orders.FirstAsync(o => o.Id == id, ct);
+```
+
+`order.Status` по-прежнему старый. `again` — **тот же экземпляр**: tracking-запрос находит сущность по ключу в identity map и не перезаписывает её значениями из базы. Если затем изменить `order` и вызвать `SaveChanges`, EF отправит только изменённые свойства. Но решение, принятое по устаревшему `Status`, будет неверным, а изменённое вами то же свойство перезапишет массовое обновление (lost update).
+
+Как избежать:
+
+- выполнять массовые операции в отдельном короткоживущем контексте или до загрузки сущностей;
+- после операции вызвать `db.ChangeTracker.Clear()` или `await db.Entry(order).ReloadAsync(ct)`;
+- читать после массовой операции с `AsNoTracking()`.
+
+**Concurrency вручную.** Токен не проверяется, но его можно встроить в условие и проверить число затронутых строк:
+
+```csharp
+var affected = await db.Accounts
+    .Where(a => a.Id == id && a.Version == expectedVersion && a.Balance >= amount)
+    .ExecuteUpdateAsync(s => s
+        .SetProperty(a => a.Balance, a => a.Balance - amount)
+        .SetProperty(a => a.Version, a => a.Version + 1), ct);
+
+if (affected == 0)
+    throw new DbUpdateConcurrencyException("Счёт изменён или средств недостаточно");
+```
+
+Часто такой атомарный `UPDATE ... SET balance = balance - @amount WHERE balance >= @amount` вообще избавляет от optimistic concurrency с ретраями.
+
+**Транзакции и execution strategy.** Если массовая операция должна быть атомарна вместе с `SaveChanges`, нужна явная транзакция. При включённом `EnableRetryOnFailure` ручную транзакцию нужно выполнять внутри стратегии, иначе EF выбросит исключение:
+
+```csharp
+var strategy = db.Database.CreateExecutionStrategy();
+await strategy.ExecuteAsync(async () =>
+{
+    await using var tx = await db.Database.BeginTransactionAsync(ct);
+    db.AuditEntries.Add(new AuditEntry("orders.expire", cutoff));
+    await db.SaveChangesAsync(ct);
+    await db.Orders.Where(o => o.CreatedAt < cutoff).ExecuteDeleteAsync(ct);
+    await tx.CommitAsync(ct);
+});
+```
+
+**Ограничения и альтернативы.**
+
+- Значение в `SetProperty` может ссылаться на навигации: `SetProperty(o => o.Total, o => o.Lines.Sum(l => l.Price * l.Qty))` превратится в подзапрос. Но обновляется всегда одна таблица: TPT и entity splitting, где сущность лежит в нескольких таблицах, не поддерживаются.
+- `ExecuteDelete` по родителю с `ON DELETE RESTRICT` упадёт на внешнем ключе (`23503`): EF не удаляет зависимые строки за вас.
+- Для массовой **вставки** этих методов нет. `AddRange` + `SaveChanges` отправляет вставки батчами, а для сотен тысяч строк в PostgreSQL быстрее `COPY` через `NpgsqlBinaryImporter` (`BeginBinaryImportAsync`) или сторонние bulk-библиотеки.
+- Большой `UPDATE` одной командой держит блокировки строк до конца и генерирует много WAL. На миллионах строк его режут на пачки по ключу.
+
+**Что спрашивают дальше:** как реализовать аудит, который не теряет массовые операции (триггеры в базе, `DbCommandInterceptor`, запрет `ExecuteDelete` на аудируемых сущностях); почему identity resolution не обновляет загруженные сущности; как резать массовое обновление на пачки, не держа долгую транзакцию.
+
+## Как устроен пул `DbContext` и что ломается при переходе на `AddDbContextPool`?
+
+```yaml
+category: ef-core
+level: senior
+difficulty: 4
+slug: ef-core-kak-ustroen-pul-dbcontext-i-chto-lomaetsya-pri-perehode-na-adddbcontextpool
+tags: internals, performance
+```
+
+`AddDbContextPool` (EF Core 2.0) и `AddPooledDbContextFactory` (EF Core 5) не создают `DbContext` на каждый scope, а берут экземпляр из пула. При `Dispose` состояние экземпляра сбрасывается, и он возвращается в пул. Экономия — аллокации и инициализация внутренних сервисов контекста. Это заметно на тысячах RPS с простыми запросами и почти незаметно, когда запрос к базе длится миллисекунды. Цена: контекст перестаёт быть «чистым объектом на запрос». Всё, что вы храните в нём сами, переживает запрос, а конструктор и `OnConfiguring` выполняются один раз на экземпляр, а не на каждую аренду.
+
+**Жизненный цикл.**
+
+1. Scope запрашивает контекст. Пул отдаёт свободный экземпляр или, если пул пуст, создаёт новый.
+2. Контекст используется как обычно.
+3. На `Dispose`/`DisposeAsync` EF вызывает сброс у самого контекста и его внутренних сервисов (`IResettableService`): очищается change tracker, закрывается соединение, сбрасываются транзакция и настройки вроде `ChangeTracker.QueryTrackingBehavior` и `AutoDetectChangesEnabled`.
+4. Экземпляр возвращается в пул, если там меньше `poolSize` объектов (по умолчанию 1024 с EF Core 6, раньше было 128), иначе уничтожается. Переполнение пула не блокирует запросы: лишние экземпляры просто создаются и уничтожаются без пула.
+
+Пул контекстов не связан с пулом соединений Npgsql. Возвращённый в пул контекст соединение не держит.
+
+**Ограничения, которые проверяет EF.** У контекста должен быть публичный конструктор, принимающий только `DbContextOptions<T>`. Внедрить в конструктор `ITenantProvider`, `ICurrentUser` и другие scoped-сервисы нельзя: экземпляр живёт дольше любого scope.
+
+**Что ломается.**
+
+- **Собственное состояние контекста.** Поля и свойства, которые вы добавили (`TenantId`, `CurrentUserId`, кэши), EF не сбрасывает. Если их выставляют не при каждой аренде, следующий запрос получит значение предыдущего. Для мультитенантности это утечка данных.
+- **`OnConfiguring` с логикой на запрос.** Он выполнится один раз, и выбор строки подключения «по тенанту» там работать не будет.
+- **Перехватчики со scoped-зависимостями.** `AddDbContextPool((sp, o) => o.AddInterceptors(sp.GetRequiredService<AuditInterceptor>()))`: options строятся один раз, `sp` здесь корневой провайдер, и перехватчик фактически становится singleton. Scoped-зависимость внутри него — captive dependency или ошибка разрешения из root.
+- **Ссылки, пережившие scope.** Без пула контекст, захваченный фоновой `Task` после конца запроса, выбросит `ObjectDisposedException`. С пулом тот же объект к этому моменту может обслуживать другой запрос, и ошибка превращается в порчу чужого change tracker.
+- **Подписки на события контекста** (`ChangeTracker.Tracked`, `SavingChanges`), сделанные при каждой аренде, — источник накопления обработчиков. Подписываться лучше один раз в конструкторе.
+
+**Правильный способ передать состояние на запрос** — scoped-фабрика поверх пула (паттерн из документации EF):
+
+```csharp
+builder.Services.AddPooledDbContextFactory<AppDbContext>(o => o.UseNpgsql(cs));
+builder.Services.AddScoped<TenantDbContextFactory>();
+builder.Services.AddScoped(sp => sp.GetRequiredService<TenantDbContextFactory>().CreateDbContext());
+
+public sealed class TenantDbContextFactory(
+    IDbContextFactory<AppDbContext> pooled, ITenantProvider tenant) : IDbContextFactory<AppDbContext>
+{
+    public AppDbContext CreateDbContext()
+    {
+        var db = pooled.CreateDbContext();
+        db.TenantId = tenant.TenantId;
+        return db;
+    }
+}
+
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public Guid TenantId { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder b) =>
+        b.Entity<Order>().HasQueryFilter(o => o.TenantId == TenantId);
+}
+```
+
+`TenantId` выставляется при **каждой** аренде, поэтому значение предыдущего запроса не утекает. DI-контейнер сам вызовет `Dispose` у контекста, созданного фабричной лямбдой, и экземпляр вернётся в пул. Фильтр ссылается на свойство контекста, и EF параметризует его значением текущего экземпляра.
+
+**Когда пул нужен, а когда нет.**
+
+| Ситуация | Пул |
+| --- | --- |
+| высокий RPS, короткие запросы, профилировщик показывает аллокации `DbContext` | даёт выигрыш |
+| Blazor Server, фоновые воркеры, где контекст создаётся часто через фабрику | `AddPooledDbContextFactory` |
+| контекст со scoped-зависимостями в конструкторе | нужна переделка через фабрику |
+| запросы по 50 мс к базе, сотни RPS | выигрыш в пределах погрешности |
+
+Переход на пул имеет смысл проверить бенчмарком на реальной нагрузке. Сам `DbContext` недорог, и чаще время уходит в трансляцию запросов, материализацию и трекинг.
+
+**Что спрашивают дальше:** чем пул контекстов отличается от compiled model и что из них сокращает холодный старт; как реализовать multi-tenancy с отдельной базой на тенанта при пуле (`DbConnection` или строка подключения на аренду); почему `DbContext` не потокобезопасен и как пул на это не влияет.
+
+## Какие подводные камни у global query filters при soft delete и multi-tenancy?
+
+```yaml
+category: ef-core
+level: senior
+difficulty: 5
+slug: ef-core-kakie-podvodnye-kamni-u-global-query-filters-pri-soft-delete-i-multi-tenancy
+tags: orm, multi-tenancy, schema
+```
+
+`HasQueryFilter` (EF Core 2.0) добавляет предикат ко всем LINQ-запросам к сущности, в том числе к `Include`, `Find` и `ExecuteUpdate`/`ExecuteDelete`. Для soft delete и изоляции тенантов это удобно, но фильтр — **соглашение уровня ORM**, а не гарантия безопасности. Он не действует на запись, на raw SQL через `Database.ExecuteSql`, на Dapper и на других клиентов базы. Он легко отключается целиком, по-разному кэшируется в зависимости от того, как написан, и неожиданно меняет результаты запросов с обязательными навигациями.
+
+```csharp
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public Guid TenantId { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder b)
+    {
+        b.Entity<Order>().HasQueryFilter(o => o.TenantId == TenantId && !o.IsDeleted);
+        b.Entity<Order>().HasIndex(o => new { o.TenantId, o.CreatedAt });
+    }
+}
+```
+
+```sql
+SELECT o.id, o.total FROM orders AS o
+WHERE o.tenant_id = @TenantId AND NOT (o.is_deleted) AND o.created_at >= @from
+```
+
+**1. Фильтр «запекается» в модель.** Модель строится один раз на тип контекста и кэшируется. Если в фильтре есть ссылка на член контекста (`TenantId`), EF подставляет её как параметр из текущего экземпляра. Если захватить локальную переменную или сервис в `OnModelCreating`, в модель навсегда попадёт значение первого контекста:
+
+```csharp
+var tenantId = _tenantProvider.TenantId;
+b.Entity<Order>().HasQueryFilter(o => o.TenantId == tenantId);
+```
+
+Этот код показывает всем пользователям данные первого тенанта. В тестах это часто не видно, потому что там один тенант.
+
+**2. Один фильтр на сущность и «всё или ничего».** До EF Core 10 повторный `HasQueryFilter` заменяет предыдущий, поэтому tenant и soft delete приходится объединять через `&&`. `IgnoreQueryFilters()` снимает **все** фильтры сразу: админский экран «показать удалённые» начинает показывать и чужие тенанты. В EF Core 10 появились именованные фильтры: `HasQueryFilter("SoftDelete", o => !o.IsDeleted)` и `IgnoreQueryFilters(["SoftDelete"])`. В более ранних версиях после `IgnoreQueryFilters()` условие по тенанту добавляют вручную, а сам вызов проверяют на ревью или анализатором.
+
+**3. Обязательные навигации и `INNER JOIN`.** Пусть у `Order` обязательная связь с `Customer`, а `Customer` фильтруется soft delete. Тогда `db.Orders.Include(o => o.Customer)` строит `INNER JOIN` к отфильтрованным клиентам, и **заказы** удалённых клиентов исчезают из выдачи, хотя на самих заказах фильтра нет. EF предупреждает об этом `CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning`. Есть два решения: согласованные фильтры на обеих сторонах связи или опциональная навигация.
+
+**4. Запись фильтр не защищает.** `Add` с чужим `TenantId`, пришедшим от клиента, или `Attach`+`Update` по известному `Id` пройдут без проверки. Нужен `SaveChangesInterceptor`, который проставляет `TenantId` на `Added`, запрещает менять его на `Modified` и переводит `Deleted` в `IsDeleted = true`:
+
+```csharp
+public sealed class TenantSaveInterceptor : SaveChangesInterceptor
+{
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+        DbContextEventData e, InterceptionResult<int> result, CancellationToken ct = default)
+    {
+        var db = (AppDbContext)e.Context!;
+        foreach (var entry in db.ChangeTracker.Entries<ITenantOwned>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Entity.TenantId = db.TenantId;
+            else if (entry.State is EntityState.Modified or EntityState.Deleted
+                     && (entry.Property(x => x.TenantId).IsModified || entry.Entity.TenantId != db.TenantId))
+                throw new InvalidOperationException("Попытка изменить данные другого тенанта");
+        }
+        return base.SavingChangesAsync(e, result, ct);
+    }
+}
+```
+
+Важно помнить, что `ExecuteDelete` перехватчик обходит: при soft delete массовое удаление станет физическим.
+
+**5. Индексы и уникальность.** Фильтр добавляет `tenant_id = @t AND NOT is_deleted` в каждый запрос. Поэтому `tenant_id` должен быть ведущей колонкой составных индексов, иначе запросы одного тенанта сканируют чужие данные. Уникальность при soft delete ломается: удалённый пользователь с тем же email блокирует регистрацию. Решение — частичный уникальный индекс:
+
+```csharp
+b.Entity<User>().HasIndex(u => new { u.TenantId, u.Email })
+    .IsUnique()
+    .HasFilter("NOT is_deleted");
+```
+
+Планировщик использует частичный индекс, только если условие запроса логически включает `NOT is_deleted`, и фильтр это как раз обеспечивает. Если же почти все строки удалены, обычный индекс заполняется «мёртвыми» записями. Тогда помогают частичные индексы под горячие запросы или перенос удалённых строк в архивную таблицу.
+
+**6. Изоляция тенантов на уровне базы.** Для настоящей гарантии в PostgreSQL добавляют Row-Level Security как второй рубеж:
+
+```sql
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON orders
+    USING (tenant_id = current_setting('app.tenant_id')::uuid);
+```
+
+Значение `app.tenant_id` выставляет `DbConnectionInterceptor` при каждом открытии соединения (`SELECT set_config('app.tenant_id', @t, false)`), а приложение подключается ролью, которая не владеет таблицей. За PgBouncer в transaction-режиме сессионные настройки ненадёжны. Там значение задают на транзакцию (`set_config(..., true)`), и все запросы должны идти внутри транзакции.
+
+**Итог.** Фильтр хорош как удобство и защита от забывчивости в чтении. Для изоляции тенантов его дополняют перехватчиком на запись, тестами «пользователь тенанта A не видит данных B» на каждый эндпоинт, а при высоких требованиях — RLS.
+
+**Что спрашивают дальше:** как фильтры взаимодействуют с пулом `DbContext`; что выбрать для мультитенантности — общую схему с `tenant_id`, схему на тенанта или базу на тенанта; как сделать каскадный soft delete для агрегата; как проверить в тестах, что ни один запрос не обходит фильтр.

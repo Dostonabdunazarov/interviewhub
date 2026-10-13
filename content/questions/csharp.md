@@ -1,6 +1,6 @@
 # C# — язык
 
-Вопросы категории `csharp` в формате импорта (`tools/questions.md`): 44 шт.
+Вопросы категории `csharp` в формате импорта (`tools/questions.md`): 49 шт.
 
 ```bash
 node tools/import-questions.mjs --file content/questions/csharp.md --dry-run
@@ -2213,3 +2213,395 @@ foreach (Delegate d in invocationList)
 - для горячего пути с одним обработчиком одиночный делегат, закэшированный в поле, почти бесплатен; ещё быстрее — generic-параметр со struct-реализацией интерфейса (`where TOp : struct, IOperation`) или указатель на функцию `delegate*<int, int>` (C# 9, `unsafe`) — без объекта делегата вообще;
 - если подписчиков много и они часто меняются — хранить `List<Action>` или `ImmutableArray<Action>` и перебирать вручную: контроль над исключениями и аллокациями;
 - кэшировать делегаты для method group: с C# 11 компилятор делает это сам для статических методов, для экземплярных — каждое `obj.Method` в месте использования создаёт новый объект.
+
+## Как CLR реализует generics и почему код для value types специализируется, а для reference types — общий?
+
+```yaml
+category: csharp
+level: senior
+difficulty: 5
+slug: csharp-kak-clr-realizuet-generics-i-pochemu-kod-dlya-value-types-specializiruetsya-a-dly
+tags: generics, jit, performance
+```
+
+В отличие от Java, generics в .NET существуют и в runtime: `List<int>` и `List<string>` — разные типы со своими `MethodTable` и своими статическими полями. Но машинный код JIT генерирует по-разному. Для всех reference-типов один и тот же метод компилируется **один раз** — в виде инстанциации над `System.__Canon`: ссылка всегда занимает 8 байт, и GC одинаково её отслеживает. Для каждого value type код **специализируется** отдельно: размер, layout и операции у `int`, `double` и вашей структуры разные. Отсюда главный практический вывод: generic-код над структурами работает как написанный вручную, а над классами платит за runtime-поиск точного типа.
+
+**Как выглядит общий код.** В shared-коде JIT не знает, чем является `T`, а многие операции требуют точного типа: `typeof(T)`, `new T()`, приведение к `T`, вызов другого generic-метода с `T`, доступ к статическим полям `Cache<T>`. Такие обращения идут через **generic dictionary** — таблицу слотов, заполняемых лениво при первом использовании:
+
+- у методов generic-класса контекст берётся из `MethodTable` объекта `this`;
+- у статических методов generic-класса и у generic-методов JIT передаёт **скрытый параметр** — указатель на `MethodTable` или `MethodDesc` конкретной инстанциации;
+- первое обращение к слоту идёт по медленному пути через runtime, дальнейшие — косвенное чтение из словаря.
+
+```csharp
+static bool IsDefault<T>(T value) => EqualityComparer<T>.Default.Equals(value, default);
+
+IsDefault(42);       // IsDefault<int>: devirtualize + inline → value == 0
+IsDefault("x");      // IsDefault<__Canon>: lookup EqualityComparer<string> в словаре + виртуальный вызов
+```
+
+**Что даёт специализация для value types:**
+
+| | `T` — reference type | `T` — value type |
+| --- | --- | --- |
+| машинный код | один на все классы (`__Canon`) | отдельный на каждый тип |
+| `typeof(T) == typeof(X)` | runtime-проверка | константа JIT, мёртвая ветка удаляется |
+| вызов метода интерфейса через ограничение | интерфейсный/виртуальный вызов | прямой вызов, возможен инлайнинг |
+| `EqualityComparer<T>.Default` | поиск в словаре + виртуальный вызов | девиртуализация и инлайнинг |
+| статические поля `Cache<T>` | адрес через словарь | прямой адрес |
+| размер кода | не растёт | растёт с числом инстанциаций |
+
+**Constrained calls.** Для `where T : IComparable<T>` компилятор эмитит `constrained. !!T callvirt CompareTo`. Для структуры это прямой вызов её метода — без боксинга, который был бы при приведении к интерфейсу. Поэтому `void Sort<T>(T[] a) where T : IComparable<T>` для `int[]` не аллоцирует, а версия с `IComparable` и `object` — боксит каждое сравнение.
+
+**Приём «struct как стратегия».** Если передать поведение через generic-параметр-структуру, JIT специализирует и заинлайнит его — аналог шаблонов C++ без виртуальных вызовов. С C# 11 / .NET 7 это удобно делать через `static abstract` члены интерфейсов:
+
+```csharp
+interface IOp { static abstract int Apply(int a, int b); }
+readonly struct Add : IOp { public static int Apply(int a, int b) => a + b; }
+
+static int Fold<TOp>(ReadOnlySpan<int> xs) where TOp : IOp
+{
+    int acc = 0;
+    foreach (var x in xs) acc = TOp.Apply(acc, x);
+    return acc;
+}
+
+int s = Fold<Add>([1, 2, 3]);
+```
+
+Для `Fold<Add>` вызов `TOp.Apply` превращается в `acc + x`. Если `TOp` — класс, код станет общим, и `TOp.Apply` пойдёт через поиск в словаре без инлайнинга. На том же механизме построена generic math: `T Sum<T>(ReadOnlySpan<T> xs) where T : INumber<T>` для `int` и `double` компилируется в обычное сложение, а не в вызовы интерфейса.
+
+**Типичный приём BCL — ветвление по `typeof(T)`:**
+
+```csharp
+static void Write<T>(Span<byte> dst, T value) where T : unmanaged
+{
+    if (typeof(T) == typeof(int)) BinaryPrimitives.WriteInt32LittleEndian(dst, (int)(object)value);
+    else MemoryMarshal.Write(dst, in value);
+}
+```
+
+Для value type `typeof(T) == typeof(int)` — константа, лишняя ветка вырезается, а `(int)(object)value` JIT распознаёт и не боксит. В shared-коде для классов такой трюк не работает.
+
+**Скрытые цены и подводные камни:**
+
+- **раздувание кода и старт.** Каждая инстанциация над структурой — отдельный JIT и отдельный машинный код. Сотни `Dictionary<TKey, TValue>` над разными структурами заметно увеличивают время прогрева и working set;
+- **`new T()`** компилируется в `Activator.CreateInstance<T>()`. Для value types это обнуление, а для классов — заметно дороже прямого `new`; в горячем пути лучше `static abstract T Create()` или делегат-фабрика;
+- **generic virtual methods** (`virtual void Handle<T>()`) нельзя диспетчеризовать через слот vtable: runtime ищет реализацию по паре «тип + инстанциация» в хэш-таблице. Это ощутимо медленнее обычного виртуального вызова;
+- **ограничения не ускоряют сами по себе.** `where T : class` или `where T : IFoo` меняют лишь то, что можно вызвать; ускорение даёт только то, что `T` оказался value type;
+- **Native AOT** компилирует все инстанциации заранее. Ссылочные покрываются общим кодом, а `typeof(Repo<>).MakeGenericType(typeof(int))` для структуры, о которой компилятор не знал, может упасть в runtime — отсюда предупреждения `RequiresDynamicCode` (IL3050);
+- **статика на каждый закрытый тип** — `Cache<string>` и `Cache<object>` разделяют код, но не статические поля. Это удобный кэш «по типу» без словаря, но и источник неожиданного числа экземпляров.
+
+**Что спрашивают дальше:** чем .NET generics отличаются от type erasure в Java и шаблонов C++, почему `List<object>` и `List<string>` разделяют код, а `List<int>` и `List<long>` — нет, как увидеть сгенерированный код (`DOTNET_JitDisasm`, Disasmo, BenchmarkDotNet `[DisassemblyDiagnoser]`), когда generic math выгоднее перегрузок под каждый числовой тип.
+
+## Как корректно реализовать равенство в иерархии типов и зачем records используют `EqualityContract`?
+
+```yaml
+category: csharp
+level: senior
+difficulty: 4
+slug: csharp-kak-korrektno-realizovat-ravenstvo-v-ierarhii-tipov-i-zachem-records-ispolzuyut-e
+tags: oop, records, equality
+```
+
+Контракт `Equals` требует рефлексивности, симметричности и транзитивности, а равные объекты обязаны иметь равные хэш-коды. В иерархии наследников с дополнительными полями эти свойства легко нарушить: базовый класс сравнивает свои поля, наследник — свои, и результат зависит от того, у кого вызвали `Equals`. Надёжных решений три: запретить наследование (`sealed`), сравнивать точный runtime-тип или использовать records, где компилятор делает это сам через виртуальное свойство `EqualityContract`.
+
+**Как ломается симметрия и транзитивность.** Пусть `Point(X, Y)` сравнивает координаты, а `ColorPoint : Point` добавляет `Color`:
+
+- если `ColorPoint.Equals` возвращает `false` для «просто `Point`», то `p.Equals(cp) == true`, а `cp.Equals(p) == false` — нарушена симметрия;
+- если для `Point` он откатывается к сравнению координат, то `red.Equals(p)` и `p.Equals(blue)` истинны, а `red.Equals(blue)` — нет: нарушена транзитивность.
+
+`HashSet` и `Dictionary` при этом ведут себя непредсказуемо: результат `Contains` зависит от порядка вставки и того, чей `Equals` вызвался.
+
+**Решение через точный тип:**
+
+```csharp
+public class Point(int x, int y) : IEquatable<Point>
+{
+    public int X { get; } = x;
+    public int Y { get; } = y;
+
+    public virtual bool Equals(Point? other) =>
+        other is not null && other.GetType() == GetType() && X == other.X && Y == other.Y;
+
+    public override bool Equals(object? obj) => Equals(obj as Point);
+    public override int GetHashCode() => HashCode.Combine(GetType(), X, Y);
+}
+```
+
+Цена — нарушение подстановки Лисков: `ColorPoint` с теми же координатами никогда не равен `Point`. Обычно это и есть правильная семантика для значений.
+
+**Что генерирует компилятор для records (C# 9):**
+
+```csharp
+public record Point(int X, int Y);
+public record ColorPoint(int X, int Y, string Color) : Point(X, Y);
+```
+
+Упрощённо в `Point` появляются:
+
+```csharp
+protected virtual Type EqualityContract => typeof(Point);
+
+public virtual bool Equals(Point? other) =>
+    (object)this == other ||
+    other is not null && EqualityContract == other.EqualityContract &&
+    EqualityComparer<int>.Default.Equals(X, other.X) &&
+    EqualityComparer<int>.Default.Equals(Y, other.Y);
+
+public override int GetHashCode() => HashCode.Combine(EqualityContract, X, Y);
+```
+
+В `ColorPoint` `EqualityContract` переопределён на `typeof(ColorPoint)`, `Equals(ColorPoint?)` вызывает `base.Equals` и сравнивает `Color`, а `Equals(Point?)` переопределён как `sealed` и делегирует в `Equals(object?)`. В результате `new Point(1, 2) == new ColorPoint(1, 2, "red")` ложно в обе стороны — симметрия сохранена. Это тот же подход «сравнить точный тип», только виртуальное свойство позволяет наследнику явно сказать «я сравним с базой», переопределив `EqualityContract`.
+
+**Подводные камни records:**
+
+- **коллекции сравниваются по ссылке.** `record Order(List<string> Items)` — две записи с одинаковым содержимым не равны. `ImmutableArray<T>` тоже сравнивается по ссылке на массив. Нужен собственный `Equals(Order? other)` с `SequenceEqual` или обёртка вроде `EquatableArray<T>`, которую часто пишут в source generators;
+- **изменяемые records.** `record` с `set`-свойствами в `HashSet` — изменение поля меняет хэш, и элемент «теряется»;
+- **свой `Equals` в record** объявляют как `public virtual bool Equals(R? other)` (в `sealed record` — без `virtual`), и тогда обязательно свой `GetHashCode`, иначе предупреждение и рассинхрон.
+
+**`==` не полиморфен.** Оператор — статический метод, выбирается по типу на этапе компиляции:
+
+```csharp
+object a = new Point(1, 2), b = new Point(1, 2);
+bool r1 = a == b;        // false — сравнение ссылок
+bool r2 = a.Equals(b);   // true — виртуальный Equals
+```
+
+В generic-коде с `where T : class` `==` тоже сравнивает ссылки, поэтому там используют `EqualityComparer<T>.Default`.
+
+**Сущности против значений.** Сущности (entity) сравнивают по идентификатору, а не по полям, и не делают их records. Ловушка EF Core: если `GetHashCode` зависит от `Id`, генерируемого базой, то после `SaveChanges` хэш меняется, и объект, положенный в `HashSet` до сохранения, больше не находится. Временные сущности (`Id == 0`) равны только самим себе по ссылке.
+
+**Внешнее равенство — `IEqualityComparer<T>`.** Если равенство зависит от контекста (ключи без учёта регистра, сравнение по `Id` в одном алгоритме и по всем полям в другом), не переопределяйте `Equals`, а передайте компаратор:
+
+```csharp
+var byName = new Dictionary<string, User>(StringComparer.OrdinalIgnoreCase);
+var byId = EqualityComparer<User>.Create((a, b) => a?.Id == b?.Id, u => u.Id.GetHashCode()); // .NET 8
+var unique = users.Distinct(byId);
+```
+
+**Что спрашивают дальше:** почему `double.NaN == double.NaN` ложно, а `double.NaN.Equals(double.NaN)` истинно и что это значит для ключей словаря, как `EqualityComparer<T>.Default` выбирает между `IEquatable<T>` и `Equals(object)`, почему `ValueType.Equals` по умолчанию медленный, чем `record struct` отличается от `record class` в равенстве (у структуры нет `EqualityContract` — наследования нет).
+
+## Какие конструкции C# компилятор разворачивает по шаблону, а не через интерфейсы, и сколько они аллоцируют?
+
+```yaml
+category: csharp
+level: senior
+difficulty: 4
+slug: csharp-kakie-konstrukcii-c-kompilyator-razvorachivaet-po-shablonu-a-ne-cherez-interfeisy
+tags: internals, allocations, collections
+```
+
+Многие конструкции C# привязаны не к интерфейсу, а к **шаблону** (pattern-based): компилятор ищет метод с нужным именем и сигнатурой — экземплярный или, во многих случаях, extension. Так устроены `foreach`, `await`, деконструкция, LINQ query syntax, индексы и диапазоны, `fixed`, `using` для `ref struct`. Смысл — производительность: если тип отдаёт структуру напрямую, обходится без боксинга и интерфейсных вызовов. Обратная сторона — одна и та же строка кода аллоцирует или нет в зависимости от **статического типа** переменной.
+
+**`foreach`.** Компилятору нужен доступный `GetEnumerator()`, возвращающий тип с `MoveNext()` и `Current`; с C# 9 подходит и extension `GetEnumerator`. Интерфейс `IEnumerable` нужен только как запасной вариант:
+
+```csharp
+var list = new List<int> { 1, 2, 3 };
+foreach (var x in list) { }       // List<int>.Enumerator — struct, 0 аллокаций, вызовы инлайнятся
+
+IEnumerable<int> seq = list;
+foreach (var x in seq) { }        // боксинг енумератора + интерфейсные MoveNext/Current
+```
+
+Для массивов и `Span<T>` `foreach` превращается в обычный `for` по индексу. `Dispose` у struct-енумератора вызывается через constrained call, без боксинга. Отсюда правило API-дизайна: возвращайте из горячих методов конкретный тип (`List<T>`, `ImmutableArray<T>`, свой struct-енумерабл), а не `IEnumerable<T>`, если вызывающему важны аллокации.
+
+**Ловушка изменяемого енумератора:**
+
+```csharp
+private readonly List<int>.Enumerator _e;
+_e.MoveNext();   // вызывается на защитной копии readonly-поля — _e никогда не сдвинется
+```
+
+**`await`.** Нужен `GetAwaiter()` (можно extension), а у awaiter — `IsCompleted`, `GetResult()` и реализация `INotifyCompletion` (или `ICriticalNotifyCompletion`). Это наполовину шаблон, наполовину интерфейс. Поэтому можно `await` на `TimeSpan` через свой extension, а `ValueTask`, `Task.Yield()` и `ConfigureAwait` используют struct-awaiter без аллокаций.
+
+**Деконструкция.** `var (k, v) = pair;` ищет `Deconstruct(out ..., out ...)` — экземплярный или extension. У `KeyValuePair` он есть с .NET Core 2.0, у records и кортежей генерируется. Аллокаций нет, но для большого `Deconstruct` у класса все поля копируются, даже если вы игнорируете часть через `_`.
+
+**Индексы и диапазоны (C# 8).** Если у типа есть `Count`/`Length` и индексатор `int`, `list[^1]` превращается в `list[list.Count - 1]`, а `x[1..3]` — в `Slice(1, 2)`. Цена зависит от типа:
+
+| Выражение | Во что компилируется | Аллокация |
+| --- | --- | --- |
+| `span[1..3]` | `Slice` | нет |
+| `str[1..3]` | `Substring` | новая строка |
+| `array[1..3]` | `RuntimeHelpers.GetSubArray` | новый массив-копия |
+| `list[^1]` | `list[list.Count - 1]` | нет |
+
+**Collection initializer.** `new List<int> { 1, 2, 3 }` требует, чтобы тип реализовывал `IEnumerable`, и вызывает `Add` на каждый элемент. Ёмкость не задаётся — список растёт удвоением. `new Dictionary<K, V> { [k] = v }` использует индексатор, а `{ { k, v } }` — `Add` и бросает исключение на дубликате.
+
+**Collection expressions (C# 12)** — target-typed, и компилятор выбирает стратегию по целевому типу:
+
+```csharp
+int[] a = [1, 2, 3];                   // new int[3]
+ReadOnlySpan<int> r = [1, 2, 3];       // данные в секции сборки (RVA), 0 аллокаций
+Span<int> s = [x, y, z];               // буфер на стеке через [InlineArray]
+List<int> l = [x, y, z];               // new List<int>(3) + запись через CollectionsMarshal
+IEnumerable<int> e = [];               // Array.Empty<int>()
+IReadOnlyList<int> ro = [x, y];        // синтезированная read-only обёртка над массивом
+ImmutableArray<int> ia = [x, y];       // через [CollectionBuilder] → ImmutableArray.Create(span)
+```
+
+Свой тип поддерживает их атрибутом `[CollectionBuilder(typeof(Builder), nameof(Builder.Create))]` с методом, принимающим `ReadOnlySpan<T>`. Spread `[..a, ..b]` заранее выделяет точный размер, если длины источников известны, иначе растит буфер по ходу.
+
+**Остальные шаблоны:**
+
+- **`using` для `ref struct`** (C# 8) — достаточно метода `Dispose()`: до C# 13 `ref struct` не мог реализовать интерфейс; `await using` ищет `DisposeAsync()`;
+- **`fixed`** (C# 7.3) — тип с `GetPinnableReference()` можно закрепить напрямую, так работают `Span<T>` и `string`;
+- **LINQ query syntax** — `from x in src where … select …` переписывается в вызовы `Where`/`Select` по имени, подойдёт любой тип с такими методами;
+- **`await foreach`** — `GetAsyncEnumerator()`, `MoveNextAsync()`, `Current`, тоже без обязательного интерфейса.
+
+**Что спрашивают дальше:** почему `IEnumerable<T>` в сигнатуре публичного метода — компромисс между гибкостью и аллокациями, как `ImmutableArray<T>` избегает боксинга при `foreach`, почему extension `GetEnumerator` позволил писать `foreach (var i in 0..10)`, как проверить отсутствие аллокаций (`[MemoryDiagnoser]`, SharpLab для просмотра lowering).
+
+## Почему nullable reference types не дают гарантий в runtime и как выстроить null-контракт на границах API?
+
+```yaml
+category: csharp
+level: senior
+difficulty: 4
+slug: csharp-pochemu-nullable-reference-types-ne-dayut-garantii-v-runtime-i-kak-vystroit-null
+tags: nullable, api-design
+```
+
+Nullable reference types (C# 8) — это только статический анализ: `string` и `string?` — один и тот же тип в IL, компилятор лишь записывает аннотации в атрибуты `[Nullable]`/`[NullableContext]` и выдаёт предупреждения. Runtime о них ничего не знает, проверок не вставляет, и `null` спокойно попадает в non-nullable переменную через десериализацию, reflection, массивы, `default` структур, оператор `!` и код без включённого NRT. Поэтому NRT — это документированный контракт и инструмент поиска ошибок, а на публичных границах его по-прежнему подкрепляют явными проверками.
+
+**Откуда берётся `null` без единого предупреждения:**
+
+```csharp
+var names = new string[3];               // элементы — null, тип string[]
+string first = names[0];                 // предупреждения нет
+
+record struct Person(string Name);
+var p = default(Person);                 // p.Name == null
+
+var u = JsonSerializer.Deserialize<User>("{}")!;   // u.Name == null, хотя string Name
+string v = cache.Get(key)!;              // «!» лишь глушит предупреждение
+```
+
+Ещё источники: `Activator.CreateInstance` и reflection, материализация ORM, вызовы из сборок с выключенным NRT («oblivious» — аннотации неизвестны, предупреждений нет), обращение к полю из конструктора базового класса до его инициализации.
+
+**Атрибуты для точного контракта** (`System.Diagnostics.CodeAnalysis`), когда `?` недостаточно выразителен:
+
+| Атрибут | Смысл | Пример |
+| --- | --- | --- |
+| `[NotNullWhen(true)]` | `out`-параметр не null, если метод вернул `true` | `bool TryGet(int id, [NotNullWhen(true)] out User? u)` |
+| `[MaybeNullWhen(false)]` | для неограниченного `T`: при `false` может быть `default` | `Dictionary.TryGetValue` |
+| `[NotNullIfNotNull(nameof(s))]` | результат не null, если аргумент не null | `string? Trim(string? s)` |
+| `[MemberNotNull(nameof(_conn))]` | после вызова поле инициализировано | метод `Init()`, вызываемый из конструкторов |
+| `[AllowNull]` / `[DisallowNull]` | вход шире/уже, чем выход | сеттер, принимающий `null` и подставляющий значение по умолчанию |
+| `[DoesNotReturn]`, `[DoesNotReturnIf(false)]` | анализатор понимает throw-хелперы | `Guard.Fail()`, `Assert(bool)` |
+
+**Ловушка generics.** Для неограниченного `T` запись `T?` (C# 9) означает «может быть `default`», а не `Nullable<T>`:
+
+```csharp
+static T? FirstOrNone<T>(IEnumerable<T> xs) => xs.FirstOrDefault();
+int r = FirstOrNone(Array.Empty<int>());   // 0, а не null: для int T? — это просто int
+```
+
+Для «настоящего» отсутствия значения у структур нужны две перегрузки с `where T : struct` и `where T : class` или явный `TryXxx`. Ограничение `where T : notnull` запрещает nullable-аргументы.
+
+**Как выстроить контракт:**
+
+- **публичный API** — аннотации плюс `ArgumentNullException.ThrowIfNull(arg)` (.NET 6): вызывающий может быть oblivious или проигнорировать предупреждение. Во внутреннем коде проверки дублировать не нужно — достаточно анализатора;
+- **входящие DTO** — `required` (C# 11): компилятор требует инициализацию, а `System.Text.Json` с .NET 7 бросает исключение, если в JSON нет `required`-свойства. В .NET 9 есть `JsonSerializerOptions.RespectNullableAnnotations` — сериализатор проверяет и аннотации NRT;
+- **не использовать `= null!`** для полей, которые реально бывают пустыми: это ложь в контракте, которая всплывёт `NullReferenceException` далеко от причины;
+- **`!` — только с обоснованием** (инвариант, который компилятор не видит), и его количество стоит отслеживать как техдолг.
+
+**Миграция большой кодовой базы:**
+
+1. Включить `<Nullable>enable</Nullable>` для новых проектов, а в старых — `#nullable enable` пофайлово, начиная с листьев графа зависимостей (утилиты, доменные модели), а не с контроллеров.
+2. Промежуточный режим `<Nullable>annotations</Nullable>` — аннотировать API без потока предупреждений; `warnings` — наоборот.
+3. После очистки модуля — `<WarningsAsErrors>nullable</WarningsAsErrors>`, чтобы регрессии не возвращались.
+
+**Неочевидные побочные эффекты включения NRT:**
+
+- **EF Core** по соглашению делает `string` колонкой `NOT NULL`, а `string?` — `NULL`. Включение NRT в проекте с моделью порождает миграцию, меняющую схему;
+- **ASP.NET Core MVC** считает non-nullable свойства модели неявно `[Required]` — запросы, которые раньше проходили валидацию, начинают получать 400;
+- для библиотек изменение аннотаций — не бинарный breaking change, но новые предупреждения у потребителей с `WarningsAsErrors`.
+
+**Что спрашивают дальше:** чем `string?` принципиально отличается от `int?` (атрибут против отдельного типа `Nullable<T>`), почему нельзя перегрузить метод по `string` и `string?`, как анализатор отслеживает состояние после `is null` и `??=`, когда оправдан `[MemberNotNullWhen]`.
+
+## Как работают interpolated string handlers и как с их помощью убрать аллокации и лишние вычисления?
+
+```yaml
+category: csharp
+level: senior
+difficulty: 5
+slug: csharp-kak-rabotayut-interpolated-string-handlers-i-kak-s-ih-pomoschyu-ubrat-allokacii-i
+tags: allocations, performance, internals
+```
+
+С C# 10 / .NET 6 интерполированная строка — не обязательно `string.Format`. Если целевой тип параметра — **handler**, компилятор разворачивает `$"..."` в последовательность вызовов `AppendLiteral`/`AppendFormatted` на этом типе. Стандартный `DefaultInterpolatedStringHandler` пишет в арендованный буфер и форматирует значения через `ISpanFormattable` — без боксинга и промежуточных строк. Свой handler может принять аргументы вызова и через `out bool shouldAppend` отказаться от форматирования целиком — тогда выражения в дырках **даже не вычисляются**.
+
+**Во что компилируется обычная интерполяция:**
+
+```csharp
+string s = $"Заказ {id} на {sum:N2}";
+```
+
+```csharp
+var h = new DefaultInterpolatedStringHandler(literalLength: 10, formattedCount: 2);
+h.AppendLiteral("Заказ ");
+h.AppendFormatted(id);
+h.AppendLiteral(" на ");
+h.AppendFormatted(sum, "N2");
+string s = h.ToStringAndClear();
+```
+
+До C# 10 это был `string.Format(string, object, object)`: боксинг `int` и `decimal`, разбор формат-строки в runtime и `ToString()` каждого аргумента. Теперь `AppendFormatted<T>` для `ISpanFormattable` вызывает `TryFormat` прямо в буфер из `ArrayPool<char>`, а итоговая строка аллоцируется один раз. Если все дырки — строки, компилятор по-прежнему выбирает `string.Concat`, а если все они константы — получается константа.
+
+**API BCL, принимающие handler напрямую:**
+
+```csharp
+sb.Append($"{x}:{y}");                                     // пишет прямо в StringBuilder, без временной строки
+string inv = string.Create(CultureInfo.InvariantCulture, $"{d}");           // своя культура
+string s2  = string.Create(null, stackalloc char[64], $"{a}-{b}");         // стартовый буфер на стеке
+bool ok    = dest.TryWrite($"{id:D8}", out int written);                    // Span<char>, 0 аллокаций
+bool ok8   = Utf8.TryWrite(utf8Dest, $"{id}", out int bytes);              // .NET 8, сразу в UTF-8
+Debug.Assert(cond, $"плохое состояние {Dump(state)}");                      // Dump вызывается только при cond == false
+```
+
+**Как написать свой handler.** Тип помечается `[InterpolatedStringHandler]`, конструктор принимает `literalLength`, `formattedCount`, затем аргументы, перечисленные в `[InterpolatedStringHandlerArgument]`, и необязательный последний `out bool shouldAppend`:
+
+```csharp
+[InterpolatedStringHandler]
+public ref struct LogHandler
+{
+    private DefaultInterpolatedStringHandler _inner;
+
+    public LogHandler(int literalLength, int formattedCount, Logger logger, Level level, out bool shouldAppend)
+    {
+        shouldAppend = logger.IsEnabled(level);
+        _inner = shouldAppend ? new DefaultInterpolatedStringHandler(literalLength, formattedCount) : default;
+    }
+
+    public void AppendLiteral(string s) => _inner.AppendLiteral(s);
+    public void AppendFormatted<T>(T value) => _inner.AppendFormatted(value);
+    public void AppendFormatted<T>(T value, string? format) => _inner.AppendFormatted(value, format);
+    internal string ToStringAndClear() => _inner.ToStringAndClear();
+}
+
+public sealed class Logger
+{
+    public Level MinLevel { get; init; }
+    public bool IsEnabled(Level level) => level >= MinLevel;
+
+    public void Log(Level level, [InterpolatedStringHandlerArgument("", "level")] ref LogHandler message)
+    {
+        if (IsEnabled(level)) Write(message.ToStringAndClear());
+    }
+}
+
+logger.Log(Level.Debug, $"state = {Serialize(state)}");   // при выключенном Debug Serialize не вызывается
+```
+
+Пустая строка в `InterpolatedStringHandlerArgument("")` означает получателя вызова (`this`). Компилятор генерирует `new LogHandler(…, logger, level, out bool ok); if (ok) { h.AppendLiteral(...); h.AppendFormatted(Serialize(state)); }`. Если `AppendFormatted` возвращает `bool`, цепочка обрывается на первом `false` — так `TryWrite` останавливается при нехватке места.
+
+**Разрешение перегрузок.** Если есть перегрузки `Log(string)` и `Log(ref LogHandler)`, для неконстантной интерполированной строки компилятор выберет handler — существующие вызовы ускоряются после перекомпиляции без изменения кода. Константная строка или обычная переменная `string` идут в перегрузку со `string`.
+
+**Подводные камни:**
+
+- **побочные эффекты в дырках.** `$"{i++}"` или `$"{GetNext()}"` при `shouldAppend == false` не выполнятся — семантика отличается от обычной строки. Для API, которые могут пропустить форматирование, это надо документировать;
+- **`ILogger` не использует handler.** `logger.LogInformation($"User {id}")` всегда строит строку и теряет структурное логирование — для Microsoft.Extensions.Logging правильно передавать шаблон с параметрами или использовать `[LoggerMessage]`;
+- **handler — `ref struct`**, поэтому метод с `ref`-параметром handler не может быть `async`, а сам handler нельзя сохранить в поле класса или захватить в лямбду;
+- **культура.** `DefaultInterpolatedStringHandler` форматирует в текущей культуре; для протоколов, ключей кэша и SQL нужен `string.Create(CultureInfo.InvariantCulture, ...)`;
+- **кастомные типы** без `ISpanFormattable` форматируются через `ToString()` — промежуточная строка остаётся. Реализация `ISpanFormattable` (или `IUtf8SpanFormattable` в .NET 8) убирает и её.
+
+**Что спрашивают дальше:** как `literalLength` и `formattedCount` помогают выбрать начальный размер буфера, чем `string.Create(…, $"...")` отличается от `string.Create(length, state, action)`, почему `Debug.Assert` с интерполяцией перестал быть дорогим в .NET 6, как проверить отсутствие аллокаций (`[MemoryDiagnoser]`).
