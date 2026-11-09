@@ -138,6 +138,11 @@ public sealed class CatalogAdminService(AppDbContext db) : ICatalogAdminService
             return OperationResult.Conflict(
                 $"Грейд используется в {puzzles} задачах. Перенесите их на другой грейд.");
 
+        var guides = await db.PrepGuides.CountAsync(g => g.LevelId == id, ct);
+        if (guides > 0)
+            return OperationResult.Conflict(
+                $"Грейд используется в {guides} гайдах подготовки. Перенесите их на другой грейд.");
+
         db.Levels.Remove(entity);
         await db.SaveChangesAsync(ct);
         return OperationResult.Success();

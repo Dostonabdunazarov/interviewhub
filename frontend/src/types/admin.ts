@@ -164,3 +164,22 @@ export interface SuggestionUpdateInput {
   status: SuggestionStatus;
   adminNote: string | null;
 }
+
+export interface PrepGuideAdminItem {
+  id: string;
+  slug: string;
+  title: string;
+  role: string;
+  roleName: string;
+  levelSlug: string;
+  levelName: string;
+  status: TheoryStatus;
+  topicCount: number;
+  updatedAt: string;
+}
+
+export interface PrepGuideStatusResult {
+  id: string;
+  slug: string;
+  status: TheoryStatus;
+}

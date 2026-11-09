@@ -29,7 +29,7 @@
 >
 > ```
 > IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
->   --url https://interview.hypex.site --email admin@hypex.site \
+>   --url https://interview.hypex.site --email <admin-email> \
 >   --dir content/theory/<раздел> --update --publish
 > ```
 >
@@ -105,7 +105,7 @@
 > Пароль — в `IH_ADMIN_PASSWORD`. По умолчанию создаёт черновиками и не трогает
 > существующие. **Запускать со своей машины** — идёт по HTTPS, Node на сервере
 > нет и не нужен. Каталог проекта на сервере — `/root/interviewhub`,
-> админ прода — `admin@hypex.site` (не `admin@interview.hypex.site`, как в dev).
+> админ прода — свой e-mail (`<admin-email>`), отличный от dev-аккаунта.
 >
 > Деплой кода: `cd /root/interviewhub && git pull && docker compose -f docker-compose.hypex.yml up -d --build`.
 >

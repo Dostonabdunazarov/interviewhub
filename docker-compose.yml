@@ -18,7 +18,7 @@ services:
     ports:
       # 55433, чтобы не конфликтовать ни с системным 5432, ни с dev-контейнером
       # ih-pg на 55432 из PLAN.md.
-      - "55433:5432"
+      - "127.0.0.1:55433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -45,7 +45,7 @@ services:
       Bootstrap__Admin__Email: "admin@interview.hypex.site"
       Bootstrap__Admin__Password: "Admin123!"
     ports:
-      - "5199:8080"
+      - "127.0.0.1:5199:8080"
 
   frontend:
     build:
@@ -65,7 +65,7 @@ services:
       retries: 3
       start_period: 45s
     ports:
-      - "8088:80"
+      - "127.0.0.1:8088:80"
 
 volumes:
   pgdata:

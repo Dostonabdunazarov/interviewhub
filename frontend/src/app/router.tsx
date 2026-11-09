@@ -21,6 +21,7 @@ const TheoryArticleEditorPage = lazy(() => import("../pages/admin/TheoryArticleE
 const AdminPuzzlesPage = lazy(() => import("../pages/admin/AdminPuzzlesPage"));
 const PuzzleEditorPage = lazy(() => import("../pages/admin/PuzzleEditorPage"));
 const AdminFactsPage = lazy(() => import("../pages/admin/AdminFactsPage"));
+const AdminPrepPage = lazy(() => import("../pages/admin/AdminPrepPage"));
 const AdminSuggestionsPage = lazy(() => import("../pages/admin/AdminSuggestionsPage"));
 const LoginPage = lazy(() => import("../pages/admin/LoginPage"));
 
@@ -38,6 +39,8 @@ import CompanyPage from "../pages/CompanyPage";
 import AboutPage from "../pages/AboutPage";
 import PuzzlesPage from "../pages/PuzzlesPage";
 import PuzzlePage from "../pages/PuzzlePage";
+import PrepPage from "../pages/PrepPage";
+import PrepGuidePage from "../pages/PrepGuidePage";
 import FactsPage from "../pages/FactsPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
@@ -67,6 +70,8 @@ export const router = createBrowserRouter([
           { path: "/", element: <HomePage /> },
           { path: "/questions", element: <QuestionsPage /> },
           { path: "/questions/:slug", element: <QuestionPage /> },
+          { path: "/prep", element: <PrepPage /> },
+          { path: "/prep/:slug", element: <PrepGuidePage /> },
           { path: "/categories/:slug", element: <CategoryPage /> },
 
           // Теория — вложенный layout: сайдбар не должен перемонтироваться
@@ -114,6 +119,7 @@ export const router = createBrowserRouter([
               { path: "puzzles/new", element: <PuzzleEditorPage /> },
               { path: "puzzles/:id", element: <PuzzleEditorPage /> },
               { path: "facts", element: <AdminFactsPage /> },
+              { path: "prep", element: <AdminPrepPage /> },
               { path: "suggestions", element: <AdminSuggestionsPage /> },
               {
                 // Вложенный ProtectedRoute с requireAdmin: Editor сюда не пройдёт,

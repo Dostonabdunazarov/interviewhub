@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using InterviewHub.Api.Filters;
 using InterviewHub.Application.Common;
 using InterviewHub.Application.Dtos;
@@ -10,17 +12,40 @@ namespace InterviewHub.Api.Endpoints;
 public static class PublicEndpoints
 {
     public const string SuggestionsRateLimit = "suggestions";
+    public const string AuthRateLimit = "auth";
 
     public static string ClientKey(HttpContext http)
     {
-        var headers = http.Request.Headers;
-        var cf = headers["CF-Connecting-IP"].ToString();
-        if (!string.IsNullOrWhiteSpace(cf)) return cf.Trim();
+        var remote = http.Connection.RemoteIpAddress;
+        if (remote is not null && IsInternalAddress(remote))
+        {
+            var headers = http.Request.Headers;
+            var cf = headers["CF-Connecting-IP"].ToString().Trim();
+            if (IPAddress.TryParse(cf, out var cfAddress)) return cfAddress.ToString();
 
-        var forwarded = headers["X-Forwarded-For"].ToString();
-        if (!string.IsNullOrWhiteSpace(forwarded)) return forwarded.Split(',')[0].Trim();
+            var forwarded = headers["X-Forwarded-For"].ToString().Split(',')[0].Trim();
+            if (IPAddress.TryParse(forwarded, out var forwardedAddress)) return forwardedAddress.ToString();
+        }
 
-        return http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return remote?.ToString() ?? "unknown";
+    }
+
+    private static bool IsInternalAddress(IPAddress address)
+    {
+        if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+        if (IPAddress.IsLoopback(address)) return true;
+
+        var bytes = address.GetAddressBytes();
+        return address.AddressFamily switch
+        {
+            AddressFamily.InterNetwork =>
+                bytes[0] == 10
+                || (bytes[0] == 172 && bytes[1] is >= 16 and <= 31)
+                || (bytes[0] == 192 && bytes[1] == 168),
+            AddressFamily.InterNetworkV6 =>
+                (bytes[0] & 0xFE) == 0xFC || address.IsIPv6LinkLocal,
+            _ => false
+        };
     }
 
     public static void MapPublicEndpoints(this IEndpointRouteBuilder app)
@@ -130,6 +155,16 @@ public static class PublicEndpoints
         {
             var puzzle = await service.GetBySlugAsync(slug, ct);
             return puzzle is null ? Results.NotFound() : Results.Ok(puzzle);
+        });
+
+        api.MapGet("/prep", async (IPrepService service, CancellationToken ct) =>
+            Results.Ok(await service.GetPublishedAsync(ct)));
+
+        api.MapGet("/prep/{slug}", async (
+            string slug, IPrepService service, CancellationToken ct) =>
+        {
+            var guide = await service.GetBySlugAsync(slug, ct);
+            return guide is null ? Results.NotFound() : Results.Ok(guide);
         });
 
         api.MapGet("/facts", async (

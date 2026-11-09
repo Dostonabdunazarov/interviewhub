@@ -30,6 +30,7 @@ public static class AdminEndpoints
         MapPuzzles(admin);
         MapFacts(admin);
         MapSuggestions(admin);
+        MapPrep(admin);
     }
 
     private static void MapPuzzles(RouteGroupBuilder admin)
@@ -69,6 +70,35 @@ public static class AdminEndpoints
 
         puzzles.MapDelete("/{id:guid}", async (
             Guid id, IPuzzleService service, CancellationToken ct) =>
+            (await service.DeleteAsync(id, ct)).ToHttpResult());
+    }
+
+    private static void MapPrep(RouteGroupBuilder admin)
+    {
+        var prep = admin.MapGroup("/prep");
+
+        prep.MapGet("/", async (IPrepService service, CancellationToken ct) =>
+            Results.Ok(await service.GetAllAsync(ct)));
+
+        prep.MapPut("/", async (PrepGuideInput input, IPrepService service, CancellationToken ct) =>
+        {
+            var result = await service.UpsertAsync(input, ct);
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : Results.ValidationProblem(result.Errors!.ToDictionary(e => e.Key, e => e.Value));
+        })
+        .Validate<PrepGuideInput>();
+
+        prep.MapPost("/{id:guid}/publish", async (
+            Guid id, IPrepService service, CancellationToken ct) =>
+            (await service.SetStatusAsync(id, TheoryStatus.Published, ct)).ToHttpResult(Results.Ok));
+
+        prep.MapPost("/{id:guid}/unpublish", async (
+            Guid id, IPrepService service, CancellationToken ct) =>
+            (await service.SetStatusAsync(id, TheoryStatus.Draft, ct)).ToHttpResult(Results.Ok));
+
+        prep.MapDelete("/{id:guid}", async (
+            Guid id, IPrepService service, CancellationToken ct) =>
             (await service.DeleteAsync(id, ct)).ToHttpResult());
     }
 

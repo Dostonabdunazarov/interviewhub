@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using InterviewHub.Application.Dtos;
 using InterviewHub.Domain.Entities;
 using InterviewHub.Infrastructure.Persistence;
@@ -19,6 +21,8 @@ public sealed class AuthService(
     IJwtTokenService jwtTokenService,
     IOptions<JwtOptions> jwtOptions) : IAuthService
 {
+    private static readonly Lazy<string> DummyHash = new(() => new PasswordHasher().Hash("timing-equalizer-1"));
+
     private readonly JwtOptions _jwt = jwtOptions.Value;
 
     public async Task<AuthResultDto?> LoginAsync(LoginInput input, CancellationToken ct = default)
@@ -28,11 +32,9 @@ public sealed class AuthService(
 
         // Неактивный пользователь и неверный пароль отвечают одинаково —
         // чтобы по ответу нельзя было перебирать существующие аккаунты.
-        if (user is null || !user.IsActive)
+        var (ok, needsRehash) = passwordHasher.Verify(user?.PasswordHash ?? DummyHash.Value, input.Password);
+        if (user is null || !user.IsActive || !ok)
             return null;
-
-        var (ok, needsRehash) = passwordHasher.Verify(user.PasswordHash, input.Password);
-        if (!ok) return null;
 
         if (needsRehash)
             user.PasswordHash = passwordHasher.Hash(input.Password);
@@ -44,9 +46,10 @@ public sealed class AuthService(
 
     public async Task<AuthResultDto?> RefreshAsync(string refreshToken, CancellationToken ct = default)
     {
+        var hash = HashToken(refreshToken);
         var token = await db.RefreshTokens
             .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Token == refreshToken, ct);
+            .FirstOrDefaultAsync(t => t.Token == hash, ct);
 
         if (token is null || !token.IsActive || !token.User.IsActive)
             return null;
@@ -59,7 +62,8 @@ public sealed class AuthService(
 
     public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
     {
-        var token = await db.RefreshTokens.FirstOrDefaultAsync(t => t.Token == refreshToken, ct);
+        var hash = HashToken(refreshToken);
+        var token = await db.RefreshTokens.FirstOrDefaultAsync(t => t.Token == hash, ct);
         if (token is null || token.RevokedAt is not null) return;
 
         token.RevokedAt = DateTime.UtcNow;
@@ -71,18 +75,22 @@ public sealed class AuthService(
         var accessToken = jwtTokenService.CreateAccessToken(user);
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes);
 
+        var rawRefreshToken = jwtTokenService.CreateRefreshToken();
         var refresh = new RefreshToken
         {
             UserId = user.Id,
-            Token = jwtTokenService.CreateRefreshToken(),
+            Token = HashToken(rawRefreshToken),
             ExpiresAt = DateTime.UtcNow.AddDays(_jwt.RefreshTokenDays)
         };
         db.RefreshTokens.Add(refresh);
 
         await db.SaveChangesAsync(ct);
 
-        return new AuthResultDto(accessToken, refresh.Token, expiresAt, ToDto(user));
+        return new AuthResultDto(accessToken, rawRefreshToken, expiresAt, ToDto(user));
     }
+
+    private static string HashToken(string token) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token ?? string.Empty)));
 
     internal static UserDto ToDto(User u) =>
         new(u.Id, u.Email, u.DisplayName, u.Role, u.IsActive, u.CreatedAt, u.LastLoginAt);

@@ -1,3 +1,4 @@
+using InterviewHub.Api.Filters;
 using InterviewHub.Application.Dtos;
 using InterviewHub.Infrastructure.Auth;
 
@@ -16,7 +17,9 @@ public static class AuthEndpoints
             return result is null
                 ? Results.Problem("Неверный email или пароль.", statusCode: StatusCodes.Status401Unauthorized)
                 : Results.Ok(result);
-        });
+        })
+        .Validate<LoginInput>()
+        .RequireRateLimiting(PublicEndpoints.AuthRateLimit);
 
         auth.MapPost("/refresh", async (
             RefreshInput input, IAuthService service, CancellationToken ct) =>
@@ -25,7 +28,8 @@ public static class AuthEndpoints
             return result is null
                 ? Results.Problem("Refresh-токен недействителен.", statusCode: StatusCodes.Status401Unauthorized)
                 : Results.Ok(result);
-        });
+        })
+        .RequireRateLimiting(PublicEndpoints.AuthRateLimit);
 
         auth.MapPost("/logout", async (
             RefreshInput input, IAuthService service, CancellationToken ct) =>

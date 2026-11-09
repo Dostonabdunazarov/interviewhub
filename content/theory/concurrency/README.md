@@ -27,7 +27,7 @@ node tools/import-theory.mjs \
 ```bash
 IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
   --url https://interview.hypex.site \
-  --email admin@hypex.site \
+  --email <admin-email> \
   --dir content/theory/concurrency --update --publish
 ```
 

@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\InterviewHub.Application\InterviewHub.Application.csproj" />
     <ProjectReference Include="..\InterviewHub.Infrastructure\InterviewHub.Infrastructure.csproj" />
   </ItemGroup>

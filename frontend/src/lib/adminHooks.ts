@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, apiErrorMessage } from "./api";
 import { queryKeys } from "./hooks";
+import { prepKeys } from "./prepHooks";
 import { toast } from "../store/toastStore";
 import type {
   AdminQuestionQueryParams,
@@ -40,6 +41,8 @@ import type {
   UserCreateInput,
   UserInput,
   FactInput,
+  PrepGuideAdminItem,
+  PrepGuideStatusResult,
   PuzzleInput,
   SuggestionUpdateInput,
 } from "../types/admin";
@@ -56,6 +59,7 @@ export const adminKeys = {
   puzzles: (params: AdminPuzzleQueryParams) => ["admin", "puzzles", params] as const,
   puzzle: (id: string) => ["admin", "puzzle", id] as const,
   facts: () => ["admin", "facts"] as const,
+  prep: () => ["admin", "prep"] as const,
   suggestions: (params: SuggestionQueryParams) => ["admin", "suggestions", params] as const,
   suggestionCounts: () => ["admin", "suggestions", "counts"] as const,
 };
@@ -145,7 +149,7 @@ export function useUsers() {
 function useAdminMutation<TArgs, TResult>(
   mutationFn: (args: TArgs) => Promise<TResult>,
   successMessage: string | ((result: TResult) => string),
-  invalidate: "content" | "references" | "users" | "theory" | "engagement",
+  invalidate: "content" | "references" | "users" | "theory" | "engagement" | "prep",
 ) {
   const queryClient = useQueryClient();
 
@@ -165,6 +169,9 @@ function useAdminMutation<TArgs, TResult>(
         void queryClient.invalidateQueries({ queryKey: ["puzzles"] });
         void queryClient.invalidateQueries({ queryKey: ["puzzle"] });
         void queryClient.invalidateQueries({ queryKey: ["facts"] });
+      } else if (invalidate === "prep") {
+        void queryClient.invalidateQueries({ queryKey: adminKeys.prep() });
+        void queryClient.invalidateQueries({ queryKey: prepKeys.guides() });
       } else if (invalidate === "theory") {
         // Публичное дерево бэкенд сбрасывает сам, но react-query держит
         // своё на час — без явного сброса правка не доедет до сайдбара.
@@ -625,5 +632,40 @@ export function useDeleteSuggestion() {
     },
     "Предложение удалено",
     "engagement",
+  );
+}
+
+export function useAdminPrep() {
+  return useQuery({
+    queryKey: adminKeys.prep(),
+    queryFn: async () => (await api.get<PrepGuideAdminItem[]>("/admin/prep")).data,
+  });
+}
+
+export function usePublishPrep() {
+  return useAdminMutation(
+    async (id: string) =>
+      (await api.post<PrepGuideStatusResult>(`/admin/prep/${id}/publish`)).data,
+    "Гайд опубликован",
+    "prep",
+  );
+}
+
+export function useUnpublishPrep() {
+  return useAdminMutation(
+    async (id: string) =>
+      (await api.post<PrepGuideStatusResult>(`/admin/prep/${id}/unpublish`)).data,
+    "Гайд снят с публикации",
+    "prep",
+  );
+}
+
+export function useDeletePrep() {
+  return useAdminMutation(
+    async (id: string) => {
+      await api.delete(`/admin/prep/${id}`);
+    },
+    "Гайд удалён",
+    "prep",
   );
 }

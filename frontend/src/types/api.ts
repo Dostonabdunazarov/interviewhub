@@ -504,3 +504,64 @@ export interface SuggestionCounts {
   accepted: number;
   rejected: number;
 }
+
+export interface PrepLevel {
+  slug: string;
+  name: string;
+  color: string | null;
+  rank: number;
+}
+
+export interface PrepGuideListItem {
+  slug: string;
+  title: string;
+  role: string;
+  roleName: string;
+  level: PrepLevel;
+  summary: string;
+  topicCount: number;
+  questionCount: number;
+  sortOrder: number;
+}
+
+export interface PrepTopicQuestion {
+  slug: string;
+  title: string;
+  difficulty: number;
+  level: { slug: string; name: string; color: string | null };
+}
+
+export interface PrepTopicArticle {
+  slug: string;
+  title: string;
+  summary: string | null;
+}
+
+export interface PrepTopicPuzzle {
+  slug: string;
+  title: string;
+  kind: PuzzleKind;
+}
+
+export interface PrepTopic {
+  slug: string;
+  title: string;
+  body: string;
+  sortOrder: number;
+  questions: PrepTopicQuestion[];
+  articles: PrepTopicArticle[];
+  puzzles: PrepTopicPuzzle[];
+}
+
+export interface PrepGuideDetail {
+  slug: string;
+  title: string;
+  role: string;
+  roleName: string;
+  level: PrepLevel;
+  summary: string;
+  intro: string;
+  interviewFormat: string;
+  updatedAt: string;
+  topics: PrepTopic[];
+}

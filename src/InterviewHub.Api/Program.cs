@@ -35,6 +35,7 @@ builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IPuzzleService, PuzzleService>();
 builder.Services.AddScoped<IFactService, FactService>();
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
+builder.Services.AddScoped<IPrepService, PrepService>();
 
 // Валидаторы админских DTO живут в Application рядом с самими DTO.
 builder.Services.AddValidatorsFromAssemblyContaining<QuestionInputValidator>();
@@ -86,6 +87,15 @@ builder.Services.AddRateLimiter(opt =>
             {
                 PermitLimit = 5,
                 Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
+    opt.AddPolicy(PublicEndpoints.AuthRateLimit, http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            PublicEndpoints.ClientKey(http),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(15),
                 QueueLimit = 0
             }));
 });

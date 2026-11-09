@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   BookOpen,
   ExternalLink,
+  ClipboardList,
   Code2,
   FileQuestion,
   Inbox,
@@ -21,6 +22,7 @@ const NAV = [
   { to: "/admin/questions", label: "Вопросы", icon: FileQuestion, end: false },
   { to: "/admin/theory", label: "Теория", icon: BookOpen, end: false },
   { to: "/admin/puzzles", label: "Задачи", icon: Code2, end: false },
+  { to: "/admin/prep", label: "Подготовка", icon: ClipboardList, end: false },
   { to: "/admin/facts", label: "Факты", icon: Lightbulb, end: false },
   { to: "/admin/suggestions", label: "Предложения", icon: Inbox, end: false },
   { to: "/admin/references", label: "Справочники", icon: Tags, end: false },

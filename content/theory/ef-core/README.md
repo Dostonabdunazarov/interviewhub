@@ -21,7 +21,7 @@ node tools/import-theory.mjs --dir content/theory/ef-core \
 # флаг виден в списке процессов и остаётся в history шелла):
 IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs --dir content/theory/ef-core \
   --url https://interview.hypex.site \
-  --email admin@hypex.site
+  --email <admin-email>
 ```
 
 По умолчанию статьи создаются **черновиками** и существующие не трогаются.

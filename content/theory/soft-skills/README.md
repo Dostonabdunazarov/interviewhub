@@ -19,7 +19,7 @@ node tools/import-theory.mjs \
 
 IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
   --url https://interview.hypex.site \
-  --email admin@hypex.site \
+  --email <admin-email> \
   --dir content/theory/soft-skills --update --publish
 ```
 

@@ -116,13 +116,20 @@ public static class SeoEndpoints
             .Select(p => new { p.Slug, p.UpdatedAt, p.CreatedAt })
             .ToListAsync(ct);
 
+        var prepGuides = await db.PrepGuides
+            .AsNoTracking()
+            .Where(g => g.Status == TheoryStatus.Published)
+            .OrderByDescending(g => g.UpdatedAt ?? g.CreatedAt)
+            .Select(g => new { g.Slug, g.UpdatedAt, g.CreatedAt })
+            .ToListAsync(ct);
+
         var sb = new StringBuilder(64 * 1024);
         sb.AppendLine("""<?xml version="1.0" encoding="UTF-8"?>""");
         sb.AppendLine("""<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">""");
 
         // Статические страницы. /theory включена намеренно: раздел пока
         // заглушка, но это осмысленная страница с текстом, а не пустышка.
-        foreach (var path in new[] { "/", "/questions", "/levels", "/companies", "/theory", "/puzzles", "/facts", "/about" })
+        foreach (var path in new[] { "/", "/questions", "/levels", "/companies", "/theory", "/puzzles", "/prep", "/facts", "/about" })
             Append(sb, baseUrl, path, null);
 
         foreach (var q in questions)
@@ -145,6 +152,9 @@ public static class SeoEndpoints
 
         foreach (var p in puzzles)
             Append(sb, baseUrl, $"/puzzles/{p.Slug}", p.UpdatedAt ?? p.CreatedAt);
+
+        foreach (var g in prepGuides)
+            Append(sb, baseUrl, $"/prep/{g.Slug}", g.UpdatedAt ?? g.CreatedAt);
 
         sb.AppendLine("</urlset>");
 

@@ -318,6 +318,165 @@ namespace InterviewHub.Infrastructure.Migrations
                     b.ToTable("Levels");
                 });
 
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepGuide", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InterviewFormat")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Intro")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LevelId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "Role", "SortOrder");
+
+                    b.ToTable("PrepGuides");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopic", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GuideId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuideId", "Slug")
+                        .IsUnique();
+
+                    b.HasIndex("GuideId", "SortOrder");
+
+                    b.ToTable("PrepTopics");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopicArticle", b =>
+                {
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TheoryArticleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TopicId", "TheoryArticleId");
+
+                    b.HasIndex("TheoryArticleId");
+
+                    b.ToTable("PrepTopicArticles");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopicPuzzle", b =>
+                {
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CodePuzzleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TopicId", "CodePuzzleId");
+
+                    b.HasIndex("CodePuzzleId");
+
+                    b.ToTable("PrepTopicPuzzles");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopicQuestion", b =>
+                {
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TopicId", "QuestionId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("PrepTopicQuestions");
+                });
+
             modelBuilder.Entity("InterviewHub.Domain.Entities.Question", b =>
                 {
                     b.Property<Guid>("Id")
@@ -834,6 +993,85 @@ namespace InterviewHub.Infrastructure.Migrations
                     b.Navigation("CreatedByUser");
                 });
 
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepGuide", b =>
+                {
+                    b.HasOne("InterviewHub.Domain.Entities.Level", "Level")
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Level");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopic", b =>
+                {
+                    b.HasOne("InterviewHub.Domain.Entities.PrepGuide", "Guide")
+                        .WithMany("Topics")
+                        .HasForeignKey("GuideId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Guide");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopicArticle", b =>
+                {
+                    b.HasOne("InterviewHub.Domain.Entities.TheoryArticle", "TheoryArticle")
+                        .WithMany()
+                        .HasForeignKey("TheoryArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InterviewHub.Domain.Entities.PrepTopic", "Topic")
+                        .WithMany("Articles")
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TheoryArticle");
+
+                    b.Navigation("Topic");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopicPuzzle", b =>
+                {
+                    b.HasOne("InterviewHub.Domain.Entities.CodePuzzle", "CodePuzzle")
+                        .WithMany()
+                        .HasForeignKey("CodePuzzleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InterviewHub.Domain.Entities.PrepTopic", "Topic")
+                        .WithMany("Puzzles")
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CodePuzzle");
+
+                    b.Navigation("Topic");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopicQuestion", b =>
+                {
+                    b.HasOne("InterviewHub.Domain.Entities.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InterviewHub.Domain.Entities.PrepTopic", "Topic")
+                        .WithMany("Questions")
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Topic");
+                });
+
             modelBuilder.Entity("InterviewHub.Domain.Entities.Question", b =>
                 {
                     b.HasOne("InterviewHub.Domain.Entities.Category", "Category")
@@ -981,6 +1219,20 @@ namespace InterviewHub.Infrastructure.Migrations
 
             modelBuilder.Entity("InterviewHub.Domain.Entities.Level", b =>
                 {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepGuide", b =>
+                {
+                    b.Navigation("Topics");
+                });
+
+            modelBuilder.Entity("InterviewHub.Domain.Entities.PrepTopic", b =>
+                {
+                    b.Navigation("Articles");
+
+                    b.Navigation("Puzzles");
+
                     b.Navigation("Questions");
                 });
 

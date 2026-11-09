@@ -107,6 +107,15 @@ public sealed class UserCreateInputValidator : AbstractValidator<UserCreateInput
     }
 }
 
+public sealed class LoginInputValidator : AbstractValidator<LoginInput>
+{
+    public LoginInputValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().MaximumLength(256);
+        RuleFor(x => x.Password).NotEmpty().MaximumLength(128);
+    }
+}
+
 public sealed class ChangePasswordInputValidator : AbstractValidator<ChangePasswordInput>
 {
     public ChangePasswordInputValidator()
