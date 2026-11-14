@@ -72,8 +72,11 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `13-paginaciya.md` | Пагинация | `pg-paginaciya` | middle | 13 |
 | `14-jsonb.md` | JSONB | `pg-jsonb` | middle | 14 |
 | `15-funkcii-procedury-view.md` | Функции, процедуры и представления | `pg-funkcii-procedury-view` | middle | 15 |
+| `16-pul-soedineniy-i-pgbouncer.md` | Пул соединений и PgBouncer | `pg-pul-soedineniy-i-pgbouncer` | senior | 16 |
+| `17-wal-i-checkpoint.md` | WAL и checkpoint | `pg-wal-i-checkpoint` | senior | 17 |
+| `18-statistika-i-zaprosy-pod-nagruzkoy.md` | Статистика планировщика и запросы под нагрузкой | `pg-statistika-i-zaprosy-pod-nagruzkoy` | senior | 18 |
 
-Все — трек `dotnet-backend`, раздел `postgresql`. Статьи 09–15 добавлены
+Все — трек `dotnet-backend`, раздел `postgresql`. Статьи 09–18 добавлены
 2026-11-14 под вопросы каталога, которые не покрывала ни одна статья.
 
 Префикс `pg-` у четырёх слагов — не случайность. Slug статьи глобально
