@@ -53,8 +53,9 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `02-k8s-limity-cpu-i-pamyati.md` | Лимиты CPU и памяти для .NET | `k8s-limity-cpu-i-pamyati` | senior | 2 |
 | `03-k8s-readiness-vs-liveness.md` | Readiness vs liveness | `k8s-readiness-vs-liveness` | senior | 3 |
 | `04-k8s-graceful-shutdown.md` | Graceful shutdown в K8s | `k8s-graceful-shutdown` | senior | 4 |
+| `05-k8s-otkazoustoychivost-i-masshtabirovanie.md` | Отказоустойчивость и автомасштабирование в K8s | `k8s-otkazoustoychivost-i-masshtabirovanie` | senior | 5 |
 
-Все четыре — трек `infrastructure`, раздел `containers`. Префикс `k8s-`
+Все — трек `infrastructure`, раздел `containers`. Префикс `k8s-`
 у слагов нужен потому, что `aspnet-health-checks` и `aspnet-graceful-shutdown`
 уже заняты статьями раздела `aspnet-core`.
 
@@ -67,7 +68,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 4 статьи по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 4 статьи по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы категории `devops` из `content/questions/devops.md` и вопрос про
 Server GC в контейнере из `content/questions/clr-gc.md`, переписанные
 в связный текст.

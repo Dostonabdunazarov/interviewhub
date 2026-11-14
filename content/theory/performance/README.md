@@ -59,8 +59,11 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `05-analiz-dampa.md` | Анализ дампа | `analiz-dampa` | senior | 5 |
 | `06-baza-ili-prilozhenie.md` | База или приложение | `baza-ili-prilozhenie` | senior | 6 |
 | `07-chto-delat-s-p99.md` | Что делать с p99 | `chto-delat-s-p99` | senior | 7 |
+| `08-profilirovanie-v-prode.md` | Профилирование в проде | `perf-profilirovanie-v-prode` | senior | 8 |
+| `09-nagruzochnye-testy-i-regressii.md` | Нагрузочные тесты и регрессии | `perf-nagruzochnye-testy-i-regressii` | senior | 9 |
+| `10-skrytye-nalogi-goryachego-puti.md` | Скрытые налоги горячего пути | `perf-skrytye-nalogi-goryachego-puti` | senior | 10 |
 
-Все семь — трек `dotnet-backend`, раздел `performance`. Источник
+Все — трек `dotnet-backend`, раздел `performance`. Источник
 черновиков — ответы в `content/questions/performance-profiling.md`.
 Приёмы снижения аллокаций не повторяются: они в статье `Снижение аллокаций`
 раздела `clr-memory`, здесь — только измерение.
@@ -75,7 +78,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 7 статей по плану (`THEORY_PLAN.md`) написаны. Числа измерены
+Все 7 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Числа измерены
 на .NET 10.0.10 (SDK 10.0.302), Windows 11, AMD Ryzen 7 5800H;
 BenchmarkDotNet 0.15.8, `dotnet-counters`, `dotnet-trace`, `dotnet-gcdump`
 и `dotnet-dump` версии 10. Что проверялось:

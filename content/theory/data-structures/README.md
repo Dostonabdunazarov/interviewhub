@@ -53,8 +53,9 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `03-hesh-tablica.md` | Хеш-таблица | `algo-hesh-tablica` | middle | 3 |
 | `04-dictionary-vs-hashset.md` | Dictionary vs HashSet на практике | `algo-dictionary-vs-hashset` | middle | 4 |
 | `05-derevya-i-grafy.md` | Деревья и графы | `algo-derevya-i-grafy` | middle | 5 |
+| `06-veroyatnostnye-struktury.md` | Вероятностные структуры и потоковые оценки | `ds-veroyatnostnye-struktury` | senior | 6 |
 
-Все пять — трек `algorithms`, раздел `data-structures`.
+Все — трек `algorithms`, раздел `data-structures`.
 
 ## Связь с разделом «Коллекции»
 
@@ -73,7 +74,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 5 статей по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 5 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы категории `algorithms` из `content/questions/algorithms.md`.
 Числа измерены на .NET 10.0.10 (SDK 10.0.302), Windows 11, x64, Release;
 код замеров — `.claude/tempfiles/theory-algo/Lab`, все фрагменты кода

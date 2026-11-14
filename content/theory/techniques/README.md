@@ -51,8 +51,10 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `04-dfs-i-bfs.md` | DFS и BFS | `algo-dfs-i-bfs` | 4 |
 | `05-rekursiya-i-perepolnenie-steka.md` | Рекурсия и переполнение стека | `algo-rekursiya-i-perepolnenie-steka` | 5 |
 | `06-dinamicheskoe-programmirovanie.md` | Динамическое программирование | `algo-dinamicheskoe-programmirovanie` | 6 |
+| `07-sortirovki.md` | Сортировки | `algo-sortirovki` | 7 |
+| `08-topologicheskaya-sortirovka.md` | Топологическая сортировка | `algo-topologicheskaya-sortirovka` | 8 |
 
-Все шесть — трек `algorithms`, раздел `techniques`, грейд `middle`.
+Все — трек `algorithms`, раздел `techniques`, грейд `middle`.
 Префикс `algo-` у slug нужен потому, что slug глобально уникален, а
 названия вроде «бинарный поиск» слишком общие.
 
@@ -70,7 +72,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 6 статей по плану (`THEORY_PLAN.md`) написаны. Весь код из статей
+Все 6 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Весь код из статей
 извлекался из markdown, компилировался и прогонялся на тестовых входах
 на .NET 10.0.10, Windows 11 x64. Что измерено:
 

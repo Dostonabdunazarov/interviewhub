@@ -58,8 +58,9 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `04-skobochnaya-posledovatelnost.md` | Скобочная последовательность | `drill-skobochnaya-posledovatelnost` | 4 |
 | `05-sliyanie-massivov.md` | Слияние отсортированных массивов | `drill-sliyanie-massivov` | 5 |
 | `06-peresechenie-massivov.md` | Пересечение массивов | `drill-peresechenie-massivov` | 6 |
+| `07-razminki-stroki-i-chisla.md` | Разминки: строки и числа | `drill-razminki-stroki-i-chisla` | 7 |
 
-Все шесть — трек `algorithms`, раздел `drills`, грейд `middle`.
+Все — трек `algorithms`, раздел `drills`, грейд `middle`.
 Slug с префиксом `drill-`, чтобы не пересечься со статьями других разделов.
 
 ## Чтобы статьи стали видны гостям
@@ -70,7 +71,7 @@ Slug с префиксом `drill-`, чтобы не пересечься со �
 
 ## Раздел написан целиком
 
-Все 6 статей по плану (`THEORY_PLAN.md`) написаны. Весь код из статей
+Все 6 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Весь код из статей
 скомпилирован и прогнан на .NET 10 (SDK 10.0.302): каждое решение сверено
 с переборной версией на тысячах случайных входов, включая пустые массивы,
 дубликаты, отрицательные числа и граничные k. Код статей сверен с

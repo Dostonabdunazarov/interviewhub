@@ -52,8 +52,10 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `02-rolling-blue-green-canary.md` | Rolling, blue-green, canary | `rolling-blue-green-canary` | senior | 2 |
 | `03-migracii-bd-pri-neskolkih-replikah.md` | Миграции БД при нескольких репликах | `migracii-bd-pri-neskolkih-replikah` | senior | 3 |
 | `04-sekrety-i-rotaciya.md` | Секреты и ротация | `sekrety-i-rotaciya` | senior | 4 |
+| `05-feature-flags.md` | Feature flags | `delivery-feature-flags` | senior | 5 |
+| `06-supply-chain-obrazov.md` | Supply chain образов | `delivery-supply-chain-obrazov` | senior | 6 |
 
-Все четыре — трек `infrastructure`, раздел `delivery`.
+Все — трек `infrastructure`, раздел `delivery`.
 
 ## Чтобы статьи стали видны гостям
 
@@ -63,7 +65,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 4 статьи по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 4 статьи по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы категории `devops` из `content/questions/devops.md`, переписанные
 в связный текст.
 
