@@ -60,8 +60,10 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `08-utechki-pamyati.md` | Утечки памяти в managed-коде | `utechki-pamyati` | 8 |
 | `09-span-i-memory.md` | Span<T> и Memory<T> | `span-i-memory` | 9 |
 | `10-snizhenie-allokaciy.md` | Снижение аллокаций | `snizhenie-allokaciy` | 10 |
+| `11-jit-iznutri.md` | JIT изнутри: tiered compilation, OSR и escape analysis | `clr-jit-iznutri` | 11 |
 
-Все десять — трек `dotnet-backend`, раздел `clr-memory`, грейд `middle`.
+Все — трек `dotnet-backend`, раздел `clr-memory`. Грейд `middle`, кроме 11 (`senior`),
+добавленной позже под непокрытые вопросы каталога.
 
 ## Чтобы статьи стали видны гостям
 

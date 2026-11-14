@@ -57,8 +57,10 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs --dir content/theory/ef-cor
 | `05-ef-optimistichnaya-blokirovka.md` | Оптимистичная блокировка | `ef-optimistichnaya-blokirovka` | 5 | middle |
 | `06-ef-migracii.md` | Миграции | `ef-migracii` | 6 | middle |
 | `07-kogda-orm-meshaet.md` | Когда ORM мешает | `kogda-orm-meshaet` | 7 | senior |
+| `08-proizvoditelnost-zaprosov.md` | Производительность запросов EF Core | `ef-proizvoditelnost-zaprosov` | 8 | senior |
+| `09-dbcontext-pooling-i-query-filters.md` | DbContext, пулинг и global query filters | `ef-dbcontext-pooling-i-query-filters` | 9 | middle |
 
-Все семь — трек `dotnet-backend`, раздел `ef-core`. Префикс `ef-` у части
+Все — трек `dotnet-backend`, раздел `ef-core`. Префикс `ef-` у части
 слагов нужен, потому что слаги глобально уникальны, а уровни изоляции,
 блокировки и миграции есть и в разделах `postgresql` и `delivery`.
 

@@ -60,8 +60,11 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `08-whenall-whenany-isklyucheniya.md` | WhenAll, WhenAny и исключения | `whenall-whenany-isklyucheniya` | 8 |
 | `09-cancellationtoken-i-taymauty.md` | CancellationToken и таймауты | `cancellationtoken-i-taymauty` | 9 |
 | `10-iasyncenumerable.md` | IAsyncEnumerable | `iasyncenumerable` | 10 |
+| `11-cena-async-i-ivaluetasksource.md` | Цена async и IValueTaskSource | `async-cena-i-ivaluetasksource` | 11 |
+| `12-async-v-prodakshene.md` | Async в продакшене | `async-v-prodakshene` | 12 |
 
-Все десять — трек `dotnet-backend`, раздел `async-await`, грейд `middle`.
+Все — трек `dotnet-backend`, раздел `async-await`. Грейд `middle`, кроме 11 (`senior`);
+11–12 добавлены позже, под непокрытые вопросы каталога.
 
 ## Чтобы статьи стали видны гостям
 

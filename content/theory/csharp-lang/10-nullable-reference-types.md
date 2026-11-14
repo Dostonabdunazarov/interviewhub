@@ -6,7 +6,7 @@ section: csharp-lang
 level: middle
 sortOrder: 10
 summary: Почему string? — это не тип, а атрибут, чего NRT не гарантирует в рантайме, оператор ! и как включать проверки в существующем проекте.
-questions: csharp-chto-takoe-nullable-reference-types
+questions: csharp-chto-takoe-nullable-reference-types, csharp-pochemu-nullable-reference-types-ne-dayut-garantii-v-runtime-i-kak-vystroit-null
 ---
 
 Nullable reference types — механизм, при котором компилятор отслеживает, может ли ссылка быть `null`, и предупреждает о разыменовании без проверки. Ключевое, что нужно понимать: это **исключительно проверка времени компиляции**. В рантайме не меняется ничего, и `string?` — не отдельный тип.

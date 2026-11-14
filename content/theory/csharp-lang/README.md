@@ -62,8 +62,12 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `10-nullable-reference-types.md` | Nullable reference types | `nullable-reference-types` | 10 |
 | `11-pattern-matching.md` | Pattern matching | `pattern-matching` | 11 |
 | `12-kovariantnost.md` | Ковариантность и контравариантность | `kovariantnost` | 12 |
+| `13-ref-const-virtual-extension.md` | ref/out/in, const/readonly, virtual/new и extension methods | `cs-ref-const-virtual-extension` | 13 |
+| `14-chto-delaet-kompilyator.md` | Что компилятор делает за вас | `cs-chto-delaet-kompilyator` | 14 |
+| `15-reflection-i-source-generators.md` | Reflection, expression trees и source generators | `cs-reflection-i-source-generators` | 15 |
 
-Все двенадцать — трек `dotnet-backend`, раздел `csharp-lang`, грейд `middle`.
+Все — трек `dotnet-backend`, раздел `csharp-lang`. Грейд `middle`, кроме 14 и 15 (`senior`);
+13–15 добавлены позже, под непокрытые вопросы каталога.
 
 ## Чтобы статьи стали видны гостям
 
