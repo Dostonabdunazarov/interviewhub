@@ -6,7 +6,7 @@ section: postgresql
 level: middle
 sortOrder: 3
 summary: Почему UPDATE в PostgreSQL создаёт новую версию строки, как работает снимок, что делают VACUUM и autovacuum с их порогами по умолчанию, откуда берётся bloat и чем грозит wraparound.
-questions: postgres-mvcc-vacuum, advanced-postgresql-kak-ustroen-mvcc-v-postgresql-i-pochemu-update-sozdaet-novuyu-versiyu, postgresql-chto-takoe-mvcc, postgresql-chto-takoe-vacuum, postgresql-chto-takoe-autovacuum, advanced-postgresql-pochemu-autovacuum-ne-uspevaet-i-kak-ego-nastraivat-pod-vysokuyu-nagru, advanced-postgresql-chto-takoe-bloat-tablic-i-indeksov-kak-ego-obnaruzhit-i-ubrat, advanced-postgresql-chto-takoe-transaction-id-wraparound-i-chem-on-ugrozhaet-prodakshenu
+questions: postgres-mvcc-vacuum, advanced-postgresql-kak-ustroen-mvcc-v-postgresql-i-pochemu-update-sozdaet-novuyu-versiyu, postgresql-chto-takoe-mvcc, postgresql-chto-takoe-vacuum, postgresql-chto-takoe-autovacuum, advanced-postgresql-pochemu-autovacuum-ne-uspevaet-i-kak-ego-nastraivat-pod-vysokuyu-nagru, advanced-postgresql-chto-takoe-bloat-tablic-i-indeksov-kak-ego-obnaruzhit-i-ubrat, advanced-postgresql-chto-takoe-transaction-id-wraparound-i-chem-on-ugrozhaet-prodakshenu, postgresql-chto-takoe-postgresql
 ---
 
 PostgreSQL не перезаписывает строки на месте. Каждое изменение создаёт новую **версию** строки, а старая остаётся в таблице, пока она может понадобиться какой-нибудь транзакции. Это и есть MVCC — Multi-Version Concurrency Control. Он даёт главное свойство PostgreSQL — чтение не блокирует запись, а запись не блокирует чтение, — и одновременно порождает главную эксплуатационную заботу: мёртвые версии нужно убирать, и делает это vacuum.

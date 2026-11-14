@@ -6,7 +6,7 @@ section: postgresql
 level: middle
 sortOrder: 4
 summary: Read Committed, Repeatable Read и Serializable в PostgreSQL — когда берётся снимок, какие аномалии остаются на каждом уровне, что такое lost update и write skew и почему ретраи по 40001 обязательны.
-questions: postgresql-kakie-urovni-izolyacii-tranzakcii-suschestvuyut, advanced-postgresql-chem-otlichayutsya-urovni-izolyacii-na-praktike-i-kakie-anomalii-ostay, postgresql-chto-takoe-read-committed, postgresql-chto-takoe-repeatable-read, postgresql-chto-takoe-serializable, postgresql-chto-takoe-non-repeatable-read, postgresql-chto-takoe-phantom-read, postgresql-chto-takoe-dirty-read
+questions: postgresql-kakie-urovni-izolyacii-tranzakcii-suschestvuyut, advanced-postgresql-chem-otlichayutsya-urovni-izolyacii-na-praktike-i-kakie-anomalii-ostay, postgresql-chto-takoe-read-committed, postgresql-chto-takoe-repeatable-read, postgresql-chto-takoe-serializable, postgresql-chto-takoe-non-repeatable-read, postgresql-chto-takoe-phantom-read, postgresql-chto-takoe-dirty-read, postgresql-chto-takoe-transaction
 ---
 
 Уровень изоляции отвечает на вопрос, что транзакция видит из работы параллельных транзакций. Стандарт SQL описывает четыре уровня через запрещённые аномалии, но в PostgreSQL их реализация опирается на MVCC и снимки, поэтому поведение отличается и от стандарта, и от других СУБД. По умолчанию в PostgreSQL — **Read Committed**, а реально различных уровней три: Read Uncommitted ведёт себя как Read Committed.

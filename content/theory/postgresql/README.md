@@ -65,8 +65,16 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `06-particionirovanie.md` | Партиционирование | `pg-particionirovanie` | senior | 6 |
 | `07-replikaciya.md` | Репликация | `pg-replikaciya` | senior | 7 |
 | `08-polnotekstovyy-poisk.md` | Полнотекстовый поиск | `polnotekstovyy-poisk` | middle | 8 |
+| `09-join-i-null.md` | JOIN и NULL | `sql-join-i-null` | middle | 9 |
+| `10-gruppirovka-i-dublikaty.md` | Группировка, DISTINCT и дубликаты | `sql-gruppirovka-i-dublikaty` | middle | 10 |
+| `11-podzaprosy-i-cte.md` | Подзапросы и CTE | `sql-podzaprosy-i-cte` | middle | 11 |
+| `12-okonnye-funkcii.md` | Оконные функции | `sql-okonnye-funkcii` | middle | 12 |
+| `13-paginaciya.md` | Пагинация | `pg-paginaciya` | middle | 13 |
+| `14-jsonb.md` | JSONB | `pg-jsonb` | middle | 14 |
+| `15-funkcii-procedury-view.md` | Функции, процедуры и представления | `pg-funkcii-procedury-view` | middle | 15 |
 
-Все восемь — трек `dotnet-backend`, раздел `postgresql`.
+Все — трек `dotnet-backend`, раздел `postgresql`. Статьи 09–15 добавлены
+2026-11-14 под вопросы каталога, которые не покрывала ни одна статья.
 
 Префикс `pg-` у четырёх слагов — не случайность. Slug статьи глобально
 уникален, а похожие темы есть в других разделах: уровни изоляции —
@@ -83,7 +91,8 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 8 статей по плану (`THEORY_PLAN.md`) написаны. Источник фактов —
+Все 8 статей по плану (`THEORY_PLAN.md`) написаны, 09–15 добавлены
+позже, под непокрытые вопросы каталога. Источник фактов —
 ответы в `content/questions/postgresql.md`, переписанные связным текстом.
 Поведение описано для PostgreSQL 15–17; то, что появилось в 18, помечено
 явно (skip scan, `BUFFERS` по умолчанию в `EXPLAIN ANALYZE`).
