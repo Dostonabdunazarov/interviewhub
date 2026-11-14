@@ -55,8 +55,12 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `04-outbox.md` | Outbox | `ms-outbox` | senior | 4 |
 | `05-exactly-once-na-praktike.md` | Exactly-once на практике | `exactly-once-na-praktike` | senior | 5 |
 | `06-versionirovanie-kontraktov.md` | Версионирование контрактов | `ms-versionirovanie-kontraktov` | senior | 6 |
+| `07-monolit-i-raspil.md` | Монолит, микросервисы и распил | `ms-monolit-i-raspil` | senior | 7 |
+| `08-api-gateway-discovery-mesh.md` | API gateway, service discovery и service mesh | `ms-api-gateway-discovery-mesh` | senior | 8 |
+| `09-event-sourcing.md` | Event sourcing | `ms-event-sourcing` | senior | 9 |
+| `10-kontrakty-i-testirovanie.md` | Контракты и тестирование | `ms-kontrakty-i-testirovanie` | middle | 10 |
 
-Все шесть — трек `distributed`, раздел `microservices`. Префикс `ms-`
+Все — трек `distributed`, раздел `microservices`. Префикс `ms-`
 добавлен там, где slug без него был бы слишком общим для всего сайта.
 
 ## Чтобы статьи стали видны гостям
@@ -67,7 +71,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 6 статей по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 6 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы категорий `microservices`, `distributed-systems` и `kafka` из
 `content/questions/`, переписанные в связный текст.
 

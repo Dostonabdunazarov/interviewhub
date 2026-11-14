@@ -55,8 +55,10 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `04-kafka-garantii-dostavki.md` | Гарантии доставки | `kafka-garantii-dostavki` | senior | 4 |
 | `05-kafka-retention-i-compaction.md` | Retention и compaction | `kafka-retention-i-compaction` | middle | 5 |
 | `06-kafka-obrabotka-oshibok-i-dlq.md` | Обработка ошибок и DLQ | `kafka-obrabotka-oshibok-i-dlq` | senior | 6 |
+| `07-kafka-prodyuser.md` | Продюсер Kafka | `kafka-prodyuser` | senior | 7 |
+| `08-kafka-konsyumer-pod-nagruzkoy.md` | Консьюмер под нагрузкой | `kafka-konsyumer-pod-nagruzkoy` | senior | 8 |
 
-Все шесть — трек `distributed`, раздел `messaging`. Слаги начинаются
+Все — трек `distributed`, раздел `messaging`. Слаги начинаются
 с `kafka-`, чтобы не пересекаться с общими темами других разделов
 («идемпотентность», «партиционирование»).
 
@@ -69,7 +71,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 6 статей по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 6 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы категории `kafka` из `content/questions/kafka.md`, переписанные
 в связный текст.
 
