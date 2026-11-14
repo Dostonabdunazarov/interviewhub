@@ -59,8 +59,15 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `07-dizayn-api-i-versionirovanie.md` | Дизайн API и версионирование | `aspnet-dizayn-api-i-versionirovanie` | 7 | middle |
 | `08-health-checks.md` | Health checks | `aspnet-health-checks` | 8 | middle |
 | `09-graceful-shutdown.md` | Graceful shutdown | `aspnet-graceful-shutdown` | 9 | senior |
+| `10-fonovye-zadachi.md` | Фоновые задачи | `aspnet-fonovye-zadachi` | 10 | middle |
+| `11-cors-i-csrf.md` | CORS и CSRF | `aspnet-cors-i-csrf` | 11 | middle |
+| `12-rate-limiting.md` | Rate limiting | `aspnet-rate-limiting` | 12 | middle |
+| `13-logirovanie.md` | Логирование | `aspnet-logirovanie` | 13 | middle |
+| `14-httpclient.md` | HttpClient | `aspnet-httpclient` | 14 | senior |
+| `15-kestrel-http2-strimming.md` | Kestrel, HTTP/2, HTTP/3 и стриминг | `aspnet-kestrel-http2-strimming` | 15 | senior |
 
-Все девять — трек `dotnet-backend`, раздел `aspnet-core`.
+Все — трек `dotnet-backend`, раздел `aspnet-core`. Статьи 10–15 добавлены
+позже, под непокрытые вопросы каталога.
 
 Слаги с префиксом `aspnet-` — намеренно: health checks и graceful shutdown
 появятся ещё раз в разделах трека `infrastructure`, и слаг должен быть
