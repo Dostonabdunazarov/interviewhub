@@ -56,8 +56,13 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `04-obrabotka-platezhey.md` | Обработка платежей | `obrabotka-platezhey` | senior | 4 |
 | `05-otslezhivanie-posylok.md` | Отслеживание посылок | `otslezhivanie-posylok` | middle | 5 |
 | `06-sistema-na-100000-rps.md` | Система на 100 000 RPS | `sistema-na-100000-rps` | senior | 6 |
+| `07-servis-zakazov.md` | Сервис заказов | `drill-servis-zakazov` | middle | 7 |
+| `08-servis-dostavki.md` | Сервис доставки | `drill-servis-dostavki` | middle | 8 |
+| `09-rekomendatelnaya-sistema.md` | Рекомендательная система | `drill-rekomendatelnaya-sistema` | senior | 9 |
+| `10-million-sobytiy-v-sekundu.md` | Миллион событий в секунду | `drill-million-sobytiy-v-sekundu` | senior | 10 |
+| `11-nedostupnost-postgresql.md` | Переживаем недоступность PostgreSQL | `drill-nedostupnost-postgresql` | senior | 11 |
 
-Все шесть — трек `distributed`, раздел `design-drills`.
+Все — трек `distributed`, раздел `design-drills`.
 
 ## Чтобы статьи стали видны гостям
 
@@ -68,7 +73,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 6 статей по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 6 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы «Спроектировать …» и «Спроектируйте …» из
 `content/questions/system-design.md`, переписанные в связные разборы.
 

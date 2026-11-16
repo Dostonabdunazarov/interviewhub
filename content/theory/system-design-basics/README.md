@@ -56,8 +56,10 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 | `05-balansirovshchiki.md` | Балансировщики | `balansirovshchiki` | middle | 5 |
 | `06-poisk-bottleneck.md` | Поиск bottleneck | `poisk-bottleneck` | senior | 6 |
 | `07-sql-vs-nosql.md` | SQL vs NoSQL | `sql-vs-nosql` | middle | 7 |
+| `08-kogda-nuzhna-kafka.md` | Когда нужна Kafka и что если она упала | `sd-kogda-nuzhna-kafka` | middle | 8 |
+| `09-otkazoustoychivost-cdn-rest.md` | Отказоустойчивость, CDN и REST API | `sd-otkazoustoychivost-cdn-rest` | middle | 9 |
 
-Все семь — трек `distributed`, раздел `system-design-basics`.
+Все — трек `distributed`, раздел `system-design-basics`.
 
 ## Чтобы статьи стали видны гостям
 
@@ -68,7 +70,7 @@ IH_ADMIN_PASSWORD='…' node tools/import-theory.mjs \
 
 ## Раздел написан целиком
 
-Все 7 статей по плану (`THEORY_PLAN.md`) написаны. Источник материала —
+Все 7 статей по плану (`THEORY_PLAN.md`) написаны, остальные добавлены позже под непокрытые вопросы каталога. Источник материала —
 ответы категории `system-design` из `content/questions/system-design.md`,
 переписанные в связный текст.
 
