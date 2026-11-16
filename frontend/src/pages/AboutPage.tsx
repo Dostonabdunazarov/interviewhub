@@ -33,8 +33,8 @@ const CONTACTS = [
   {
     icon: Send,
     label: "Telegram",
-    value: "@hypex_s",
-    href: "https://t.me/hypex_s",
+    value: "@redlynx_cn",
+    href: "https://t.me/redlynx_cn",
     hint: "Быстрее всего — обычно отвечаю в тот же день",
   },
   {

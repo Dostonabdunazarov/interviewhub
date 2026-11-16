@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using InterviewHub.Application.Common;
 using InterviewHub.Application.Dtos;
 using InterviewHub.Domain.Entities;
@@ -25,10 +26,19 @@ public sealed record PrepUpsertResult(PrepUpsertDto? Value, IReadOnlyDictionary<
 
 public sealed class PrepService(AppDbContext db) : IPrepService
 {
+    private static readonly Expression<Func<PrepGuide, int>> RoleRank = g =>
+        g.Role == "backend" ? 0
+        : g.Role == "system-design" ? 1
+        : g.Role == "databases" ? 2
+        : g.Role == "algorithms" ? 3
+        : g.Role == "tech-lead" ? 4
+        : 5;
+
     public async Task<IReadOnlyList<PrepListItemDto>> GetPublishedAsync(CancellationToken ct = default) =>
         await db.PrepGuides.AsNoTracking()
             .Where(g => g.Status == TheoryStatus.Published)
-            .OrderBy(g => g.Role)
+            .OrderBy(RoleRank)
+            .ThenBy(g => g.Role)
             .ThenBy(g => g.Level.Rank)
             .ThenBy(g => g.SortOrder)
             .Select(g => new PrepListItemDto(
@@ -81,7 +91,8 @@ public sealed class PrepService(AppDbContext db) : IPrepService
 
     public async Task<IReadOnlyList<PrepGuideAdminDto>> GetAllAsync(CancellationToken ct = default) =>
         await db.PrepGuides.AsNoTracking()
-            .OrderBy(g => g.Role)
+            .OrderBy(RoleRank)
+            .ThenBy(g => g.Role)
             .ThenBy(g => g.Level.Rank)
             .ThenBy(g => g.SortOrder)
             .Select(g => new PrepGuideAdminDto(
