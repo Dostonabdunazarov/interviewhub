@@ -1,5 +1,5 @@
 ---
-title: Базы данных и PostgreSQL
+title: Базы данных и PostgreSQL — Middle
 slug: databases-postgresql
 role: databases
 roleName: Базы данных и PostgreSQL
